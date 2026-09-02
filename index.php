@@ -1,3 +1,9 @@
+<?php
+
+require_once __DIR__ . '/php/helper-functions.php';
+require_once __DIR__ . '/php/translate.php';
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,14 +13,13 @@
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Kalender</title>	
+    <title><?php echo ucfirst(translate('calendar')) ?></title>	
 
     <link id="icon" rel="shortcut icon" type="image/x-icon" href="../favicon.ico"/>
 	
 	
     <link href="css/style.css" rel="stylesheet">
     <link href="googleFonts/fonts.css" rel="stylesheet">
-    <!-- Change to online reference when going live-->
     <script src="js/jquery.js"></script>
     <script src="js/event-and-date-crud.js"></script>
 </head>
@@ -23,16 +28,16 @@
 
 	$(document).ready(function(){
         console.log("test")
+        addEvent();
 	});
 
 </script>
 
 <body>
- 
-
-	<div id="footer">
-		<a id="impress" href="https://www.nik-lochmann.de/impressum.html">Impressum | </a>
-		<a id="daten" href="https://www.nik-lochmann.de/dse.html">Datenschutzerkl&auml;rung</a>
-	</div>
+    <?php 
+        if (file_exists(__DIR__ . '/footer.php')) {
+            include __DIR__ . '/footer.php';
+        }
+    ?>
 </body>
 </html>
