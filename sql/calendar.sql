@@ -31,7 +31,7 @@ CREATE TABLE `events` (
   `event_id` char(36) NOT NULL,
   `description` varchar(2000) NOT NULL,
   `type` varchar(50) NOT NULL,
-  `color` varchar(7) NOT NULL,
+  `color` varchar(6) NOT NULL,
   `include_in_mail` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
