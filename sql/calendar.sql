@@ -64,6 +64,20 @@ CREATE TABLE `event_ordering` (
   `position` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `event_types`
+--
+
+CREATE TABLE `event_types` (
+  `event_type_id` char(36) NOT NULL,
+  `event_type` varchar(50) NOT NULL,
+  PRIMARY KEY (`event_type_id`),
+  UNIQUE KEY `uk_event_type` (`event_type`)  -- Prevents duplicate type names
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indizes der exportierten Tabellen
 --
@@ -107,6 +121,16 @@ ALTER TABLE `event_date_ranges`
 ALTER TABLE `event_ordering`
   ADD CONSTRAINT `event_ordering_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE;
 COMMIT;
+
+-- Change the `type` column to store UUIDs (char(36)) instead of strings
+ALTER TABLE `events`
+  CHANGE COLUMN `type` `type` char(36) NOT NULL;
+
+-- Add foreign key to reference `event_types.event_type_id`
+ALTER TABLE `events`
+  ADD CONSTRAINT `fk_events_type`
+  FOREIGN KEY (`type`) REFERENCES `event_types` (`event_type_id`)
+  ON DELETE RESTRICT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
