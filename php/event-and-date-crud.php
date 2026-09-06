@@ -237,4 +237,38 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
     }
 }
 
+/**
+ * Add a new event type to the event_types table.
+ *
+ * @param string $eventType The name of the event type (e.g., "work", "personal")
+ * @return string The new event_type_id (UUID)
+ * @throws Exception If the type already exists
+ */
+function addEventType(string $eventType): string {
+    $pdo = getPDO();
+    $pdo->beginTransaction();
+    try {
+        // Check if type already exists
+        $existingId = $pdo->query(
+            "SELECT event_type_id FROM event_types WHERE event_type = '{$pdo->quote($eventType)}'"
+        )->fetchColumn();
+
+        if ($existingId) {
+            throw new Exception("Event type '$eventType' already exists. Use ID: $existingId");
+        }
+
+        $eventTypeId = uuid();
+        $pdo->exec(
+            "INSERT INTO event_types (event_type_id, event_type)
+             VALUES ('$eventTypeId', '{$pdo->quote($eventType)}')"
+        );
+
+        $pdo->commit();
+        return $eventTypeId;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+
 ?>
