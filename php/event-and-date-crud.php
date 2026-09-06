@@ -11,7 +11,6 @@ require_once 'get-db-connection.php';
  * @throws Exception On validation errors or DB failures
  */
 function addEvent(array $postData): string {
-    // Explicitly decompose the post data into your required variables
     $eventData = $postData['eventData'] ?? [];
     $dateRanges = $postData['dateRanges'] ?? null;
 
@@ -20,9 +19,9 @@ function addEvent(array $postData): string {
     if (!$isNestedTransaction) {
         $pdo->beginTransaction();
     }
-    
+
     try {
-        // Validate required fields inside the nested eventData array
+        // Validate required fields
         foreach (['description', 'type', 'color'] as $field) {
             if (empty($eventData[$field])) {
                 throw new Exception("Missing required field: $field");
@@ -32,17 +31,17 @@ function addEvent(array $postData): string {
         $eventId = $pdo->query("SELECT UUID()")->fetchColumn();
         $includeInMail = (int)(bool)($eventData['include_in_mail'] ?? false);
 
-        // 1. USE PREPARED STATEMENTS (No quotes needed!)
+        // --- ENCRYPT DESCRIPTION ---
+        $encryptedDescription = encryptDescription($eventData['description']);
+
         $stmt = $pdo->prepare(
             "INSERT INTO events (event_id, description, type, color, include_in_mail)
              VALUES (:event_id, :description, :type, :color, :include_in_mail)"
         );
-
-        // 2. EXECUTE WITH DATA
         $stmt->execute([
             ':event_id' => $eventId,
-            ':description' => $eventData['description'],
-            ':type' => $eventData['type'],
+            ':description' => $encryptedDescription,  // Encrypted
+            ':type' => $eventData['type'],          // UUID (unchanged)
             ':color' => $eventData['color'],
             ':include_in_mail' => $includeInMail
         ]);
@@ -54,15 +53,19 @@ function addEvent(array $postData): string {
                     throw new Exception("Date range must include 'start'");
                 }
                 $start = $range['start'];
-                $end = $range['end'] ?? $start; // Single day if end not provided
+                $end = $range['end'] ?? $start;
                 addDateToEvent($eventId, $start, $end);
             }
         }
 
-        $pdo->commit();
+        if (!$isNestedTransaction) {
+            $pdo->commit();
+        }
         return $eventId;
     } catch (Exception $e) {
-        $pdo->rollBack();
+        if (!$isNestedTransaction) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 }
@@ -95,6 +98,7 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
             throw new Exception("Start date must be <= end date");
         }
 
+        /*
         // Check if ANY date in the new range already exists for this event
         $stmtExisting = $pdo->prepare(
             "SELECT 1 FROM event_date_ranges
@@ -111,6 +115,7 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
         if ($stmtExisting->fetch()) {
             throw new Exception("Event already exists on one or more dates in this range");
         }
+        */
 
         // Find ALL ranges that overlap or are adjacent to the new range
         $stmtAllRanges = $pdo->prepare(
@@ -127,7 +132,10 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
             $end = new DateTime($range['end_date']);
 
             // Check for overlap or adjacency (within ±1 day)
-            if ($newEnd >= $start->modify('-1 day') && $newStart <= $end->modify('+1 day')) {
+            $checkStart = (clone $start)->modify('-1 day');
+            $checkEnd   = (clone $end)->modify('+1 day');
+
+            if ($newEnd >= $checkStart && $newStart <= $checkEnd) {
                 $rangesToMerge[] = $range;
             }
         }
