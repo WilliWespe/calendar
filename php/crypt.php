@@ -1,5 +1,9 @@
 <?php
 require_once 'get-db-connection.php';
+require_once 'helper-functions.php';
+
+// Adjust this path to point to where your .env file lives relative to routing.php
+loadEnv(__DIR__ . '/../.env');
 
 /**
  * Encrypt a string using AES-256-CBC.
@@ -8,12 +12,12 @@ require_once 'get-db-connection.php';
  * @throws Exception If encryption fails or key is missing.
  */
 function encryptDescription(string $plaintext): string {
-    $key = getenv('ENCRYPTION_KEY');
+    $key = getenv('ENCRYPTION_KEY_CALENDAR');
     if (empty($key)) {
-        throw new Exception("ENCRYPTION_KEY environment variable is not set.");
+        throw new Exception("ENCRYPTION_KEY_CALENDAR environment variable is not set.");
     }
     if (strlen($key) < 32) {
-        throw new Exception("ENCRYPTION_KEY must be at least 32 bytes (256 bits).");
+        throw new Exception("ENCRYPTION_KEY_CALENDAR must be at least 32 bytes (256 bits).");
     }
 
     $iv = openssl_random_pseudo_bytes(16); // 16 bytes for AES
@@ -37,12 +41,12 @@ function encryptDescription(string $plaintext): string {
  * @throws Exception If decryption fails or key is missing.
  */
 function decryptDescription(string $encrypted): string {
-    $key = getenv('ENCRYPTION_KEY');
+    $key = getenv('ENCRYPTION_KEY_CALENDAR');
     if (empty($key)) {
-        throw new Exception("ENCRYPTION_KEY environment variable is not set.");
+        throw new Exception("ENCRYPTION_KEY_CALENDAR environment variable is not set.");
     }
     if (strlen($key) < 32) {
-        throw new Exception("ENCRYPTION_KEY must be at least 32 bytes (256 bits).");
+        throw new Exception("ENCRYPTION_KEY_CALENDAR must be at least 32 bytes (256 bits).");
     }
 
     $data = base64_decode($encrypted);

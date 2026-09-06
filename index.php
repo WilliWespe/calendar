@@ -27,13 +27,15 @@ require_once __DIR__ . '/php/translate.php';
 <script>
 
 	$(document).ready(function(){
-        console.log("test")
-        addEvent();
 	});
 
 </script>
 
 <body>
+    <button onclick="addEvent()">Add event</button>
+    <button onclick="storeCalendarDataInRAM()">Fetch Data</button>
+    <button onclick="addEventType('stuff')">Add event type</button>
+    <button onclick="deleteEvent('acbbffc7-aa00-11f1-bb01-4c796e9137c8')">Delete event</button>
     <?php 
         if (file_exists(__DIR__ . '/footer.php')) {
             include __DIR__ . '/footer.php';

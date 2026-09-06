@@ -70,6 +70,45 @@ function addEvent(array $postData): string {
     }
 }
 
+/**
+ * Delete an event and ALL its associated data (ranges + ordering) via cascading foreign keys.
+ *
+ * @param array $postData The entire $_POST array passed from the router.
+ * @return void
+ * @throws Exception If eventId is missing or the event is not found
+ */
+function deleteEvent(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+
+    if (empty($eventId)) {
+        throw new Exception("No eventId passed");
+    }
+
+    $pdo = getPDO();
+    $isNestedTransaction = $pdo->inTransaction();
+    if (!$isNestedTransaction) {
+        $pdo->beginTransaction();
+    }
+    
+    try {
+        $stmt = $pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
+        $stmt->execute([':event_id' => $eventId]);
+
+        if ($stmt->rowCount() === 0) {
+            throw new Exception("Event not found");
+        }
+
+        if (!$isNestedTransaction) {
+            $pdo->commit();
+        }
+    } catch (Exception $e) {
+        if (!$isNestedTransaction) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
 /* ---------------------------------------------------------------------------------------- */
 
 /**
@@ -248,35 +287,102 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
 /**
  * Add a new event type to the event_types table.
  *
- * @param string $eventType The name of the event type (e.g., "work", "personal")
+ * @param array $postData The $_POST array containing 'eventType'
  * @return string The new event_type_id (UUID)
- * @throws Exception If the type already exists
+ * @throws Exception If the type already exists or input is invalid
  */
-function addEventType(string $eventType): string {
+function addEventType(array $postData): string {
+    // Extract the string from the POST array
+    $eventType = $postData['eventType'] ?? '';
+    
+    if (empty($eventType)) {
+        throw new Exception("Event type cannot be empty.");
+    }
+
     $pdo = getPDO();
-    $pdo->beginTransaction();
+    $isNestedTransaction = $pdo->inTransaction();
+    if (!$isNestedTransaction) {
+        $pdo->beginTransaction();
+    }
     try {
-        // Check if type already exists
-        $existingId = $pdo->query(
-            "SELECT event_type_id FROM event_types WHERE event_type = '{$pdo->quote($eventType)}'"
-        )->fetchColumn();
+        // Check if type already exists using a prepared statement
+        $stmt = $pdo->prepare("SELECT event_type_id FROM event_types WHERE event_type = :event_type");
+        $stmt->execute([':event_type' => $eventType]);
+        $existingId = $stmt->fetchColumn();
 
         if ($existingId) {
-            throw new Exception("Event type '$eventType' already exists. Use ID: $existingId");
+            throw new Exception("Event type '$eventType' already exists. ID: $existingId");
         }
 
-        $eventTypeId = uuid();
-        $pdo->exec(
+        $eventTypeId = $pdo->query("SELECT UUID()")->fetchColumn();
+        
+        // Insert using a prepared statement
+        $stmtInsert = $pdo->prepare(
             "INSERT INTO event_types (event_type_id, event_type)
-             VALUES ('$eventTypeId', '{$pdo->quote($eventType)}')"
+             VALUES (:event_type_id, :event_type)"
         );
+        $stmtInsert->execute([
+            ':event_type_id' => $eventTypeId,
+            ':event_type' => $eventType
+        ]);
 
-        $pdo->commit();
+        if (!$isNestedTransaction) {
+            $pdo->commit();
+        }
         return $eventTypeId;
     } catch (Exception $e) {
-        $pdo->rollBack();
+        if (!$isNestedTransaction) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
+}
+
+/**
+ * Fetches all calendar data (events, date ranges, and orderings) in a single query batch.
+ * 
+ * Automatically decrypts event descriptions before returning.
+ *
+ * @return array{events: array, dateRanges: array, orderings: array, eventTypes: array} Associative array of calendar data.
+ * @throws PDOException If a database query fails.
+ * @throws Exception If description decryption fails.
+ */
+function getAllCalendarData(): array {
+    $pdo = getPDO();
+
+    // 1. Get all events (with type names)
+    $events = $pdo->query(
+        "SELECT e.*, et.event_type
+         FROM events e
+         JOIN event_types et ON e.type = et.event_type_id"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // --- DECRYPT ALL DESCRIPTIONS ---
+    foreach ($events as &$event) {
+        $event['description'] = decryptDescription($event['description']);
+    }
+
+    // 2. Get all date ranges
+    $dateRanges = $pdo->query(
+        "SELECT * FROM event_date_ranges"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // 3. Get all orderings
+    $orderings = $pdo->query(
+        "SELECT * FROM event_ordering"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // 4. Get all event type
+    $eventTypes = $pdo->query(
+        "SELECT * FROM event_types"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    return [
+        'events' => $events,
+        'dateRanges' => $dateRanges,
+        'orderings' => $orderings,
+        'eventTypes' => $eventTypes
+    ];
 }
 
 ?>
