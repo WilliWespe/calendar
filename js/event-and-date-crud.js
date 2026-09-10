@@ -2,23 +2,22 @@ async function addEvent() {
     var mockupDataAddEventList = [
         {
             eventData: {
-                description: "Das ist die erste Testbeschreibung",
-                type: "f49237d1-a9f8-11f1-bb01-4c796e9137c8",
-                color: "ff0000",
-                include_in_mail: 0
+                event_description: "Das ist ein Test",
+                event_type: "37940a20-ad44-11f1-834f-4c796e9137c8",
+                event_dot_color: "000000",
+                include_event_in_mail: 0
             },
-            dateRanges: [
+            eventDateRanges: [
                 { start: '2026-10-01', end: '2026-10-05' }
             ]
         },
         {
             eventData: {
-                description: "Das ist die zweite Testbeschreibung",
-                type: "e9f7c19a-a9f9-11f1-bb01-4c796e9137c8",
-                color: "ffcc02",
-                include_in_mail: 1
+                event_description: "Das ist die zweite Testbeschreibung",
+                event_type: "4abb804e-ad44-11f1-834f-4c796e9137c8",
+                include_event_in_mail: 1
             },
-            dateRanges: [
+            eventDateRanges: [
                 { start: '2026-10-12', end: '2026-10-12' }
             ]
         }
@@ -32,7 +31,7 @@ async function addEvent() {
         let payload = {
             action: "addEvent",
             eventData: currentItem.eventData,
-            dateRanges: currentItem.dateRanges
+            eventDateRanges: currentItem.eventDateRanges
         };
 
         try {
@@ -81,13 +80,14 @@ async function deleteEvent(eventId) {
     }
 }
 
-async function addEventType(eventType) {
+async function addEventType(eventType, eventBackgroundColor = null) {
     
     // 1. Create a clean JS object. 
     // jQuery will automatically convert this to bracket notation for $_POST.
     let payload = {
         action: "addEventType",
-        eventType: eventType
+        eventType: eventType,
+        eventBackgroundColor: eventBackgroundColor
     };
 
     try {
@@ -135,20 +135,20 @@ async function fetchCalendarData() {
         console.error("Server returned an error:", xhr.status, xhr.responseText);
         
         // Return empty arrays to prevent destructuring crashes on failure
-        return { events: [], dateRanges: [], orderings: [] };
+        return { events: [], eventDateRanges: [], orderings: [] };
     }
 }
 
 async function storeCalendarDataInRAM(){
     // After fetching all data:
-    const { events, dateRanges, orderings, eventTypes } = await fetchCalendarData();
+    const { events, eventDateRanges, orderings, eventTypes } = await fetchCalendarData();
 
     // Pre-process for O(1) lookups:
     const eventsByDate = new Map();  // date (YYYY-MM-DD) → events[]
     const orderingsByMM_DD = new Map(); // "MM-DD" → { event_id: position }
 
     // Build eventsByDate
-    dateRanges.forEach(range => {
+    eventDateRanges.forEach(range => {
         const start = new Date(range.start_date);
         const end = new Date(range.end_date);
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -174,7 +174,7 @@ async function storeCalendarDataInRAM(){
     console.log(events);
     console.log("----------------------------------------------")
     console.log("Date ranges:")
-    console.log(dateRanges);
+    console.log(eventDateRanges);
     console.log("----------------------------------------------")
     console.log("orderings:")
     console.log(orderings);

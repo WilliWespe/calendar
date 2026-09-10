@@ -12,7 +12,7 @@ require_once 'get-db-connection.php';
  */
 function addEvent(array $postData): string {
     $eventData = $postData['eventData'] ?? [];
-    $dateRanges = $postData['dateRanges'] ?? null;
+    $eventDateRanges = $postData['eventDateRanges'] ?? null;
 
     $pdo = getPDO();
     $isNestedTransaction = $pdo->inTransaction();
@@ -22,33 +22,34 @@ function addEvent(array $postData): string {
 
     try {
         // Validate required fields
-        foreach (['description', 'type', 'color'] as $field) {
+        foreach (['event_description', 'event_type'] as $field) {
             if (empty($eventData[$field])) {
                 throw new Exception("Missing required field: $field");
             }
         }
 
         $eventId = $pdo->query("SELECT UUID()")->fetchColumn();
-        $includeInMail = (int)(bool)($eventData['include_in_mail'] ?? false);
+        $includeEventInMail = (int)(bool)($eventData['include_event_in_mail'] ?? false);
+        $eventDotColor = !empty($eventData['event_dot_color']) ? $eventData['event_dot_color'] : null;
 
         // --- ENCRYPT DESCRIPTION ---
-        $encryptedDescription = encryptDescription($eventData['description']);
+        $encryptedEventDescription = encryptDescription($eventData['event_description']);
 
         $stmt = $pdo->prepare(
-            "INSERT INTO events (event_id, description, type, color, include_in_mail)
-             VALUES (:event_id, :description, :type, :color, :include_in_mail)"
+            "INSERT INTO events (event_id, event_description, event_type, event_dot_color, include_event_in_mail)
+             VALUES (:event_id, :event_description, :event_type, :event_dot_color, :include_event_in_mail)"
         );
         $stmt->execute([
             ':event_id' => $eventId,
-            ':description' => $encryptedDescription,  // Encrypted
-            ':type' => $eventData['type'],          // UUID (unchanged)
-            ':color' => $eventData['color'],
-            ':include_in_mail' => $includeInMail
+            ':event_description' => $encryptedEventDescription,  
+            ':event_type' => $eventData['event_type'],          
+            ':event_dot_color' => $eventDotColor, // 3. Insert the parsed variable
+            ':include_event_in_mail' => $includeEventInMail
         ]);
 
         // Add date ranges if provided
-        if ($dateRanges !== null) {
-            foreach ($dateRanges as $range) {
+        if ($eventDateRanges !== null) {
+            foreach ($eventDateRanges as $range) {
                 if (!isset($range['start'])) {
                     throw new Exception("Date range must include 'start'");
                 }
@@ -294,6 +295,7 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
 function addEventType(array $postData): string {
     // Extract the string from the POST array
     $eventType = $postData['eventType'] ?? '';
+    $eventTypeBackgroundColor = !empty($postData['eventBackgroundColor']) ? $postData['eventBackgroundColor'] : null;
     
     if (empty($eventType)) {
         throw new Exception("Event type cannot be empty.");
@@ -318,13 +320,14 @@ function addEventType(array $postData): string {
         
         // Insert using a prepared statement
         $stmtInsert = $pdo->prepare(
-            "INSERT INTO event_types (event_type_id, event_type)
-             VALUES (:event_type_id, :event_type)"
-        );
-        $stmtInsert->execute([
-            ':event_type_id' => $eventTypeId,
-            ':event_type' => $eventType
-        ]);
+        "INSERT INTO event_types (event_type_id, event_type, event_type_background_color)
+         VALUES (:event_type_id, :event_type, :event_type_background_color)"
+    );
+    $stmtInsert->execute([
+        ':event_type_id' => $eventTypeId,
+        ':event_type' => $eventType,
+        ':event_type_background_color' => $eventTypeBackgroundColor
+    ]);
 
         if (!$isNestedTransaction) {
             $pdo->commit();
@@ -352,18 +355,18 @@ function getAllCalendarData(): array {
 
     // 1. Get all events (with type names)
     $events = $pdo->query(
-        "SELECT e.*, et.event_type
+        "SELECT e.*, et.event_type AS event_type_name
          FROM events e
-         JOIN event_types et ON e.type = et.event_type_id"
+         JOIN event_types et ON e.event_type = et.event_type_id"
     )->fetchAll(PDO::FETCH_ASSOC);
 
     // --- DECRYPT ALL DESCRIPTIONS ---
     foreach ($events as &$event) {
-        $event['description'] = decryptDescription($event['description']);
+        $event['event_description'] = decryptDescription($event['event_description']);
     }
 
     // 2. Get all date ranges
-    $dateRanges = $pdo->query(
+    $eventDateRanges = $pdo->query(
         "SELECT * FROM event_date_ranges"
     )->fetchAll(PDO::FETCH_ASSOC);
 
@@ -379,7 +382,7 @@ function getAllCalendarData(): array {
 
     return [
         'events' => $events,
-        'dateRanges' => $dateRanges,
+        'eventDateRanges' => $eventDateRanges,
         'orderings' => $orderings,
         'eventTypes' => $eventTypes
     ];
