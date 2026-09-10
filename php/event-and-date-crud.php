@@ -11,9 +11,79 @@ require_once 'get-db-connection.php';
  * @throws Exception On validation errors or DB failures
  */
 function addEvent(array $postData): string {
-    // Explicitly decompose the post data into your required variables
     $eventData = $postData['eventData'] ?? [];
-    $dateRanges = $postData['dateRanges'] ?? null;
+    $eventDateRanges = $postData['eventDateRanges'] ?? null;
+
+    $pdo = getPDO();
+    $isNestedTransaction = $pdo->inTransaction();
+    if (!$isNestedTransaction) {
+        $pdo->beginTransaction();
+    }
+
+    try {
+        // Validate required fields
+        foreach (['event_description', 'event_type'] as $field) {
+            if (empty($eventData[$field])) {
+                throw new Exception("Missing required field: $field");
+            }
+        }
+
+        $eventId = $pdo->query("SELECT UUID()")->fetchColumn();
+        $includeEventInMail = (int)(bool)($eventData['include_event_in_mail'] ?? false);
+        $eventDotColor = !empty($eventData['event_dot_color']) ? $eventData['event_dot_color'] : null;
+
+        // --- ENCRYPT DESCRIPTION ---
+        $encryptedEventDescription = encryptDescription($eventData['event_description']);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO events (event_id, event_description, event_type, event_dot_color, include_event_in_mail)
+             VALUES (:event_id, :event_description, :event_type, :event_dot_color, :include_event_in_mail)"
+        );
+        $stmt->execute([
+            ':event_id' => $eventId,
+            ':event_description' => $encryptedEventDescription,  
+            ':event_type' => $eventData['event_type'],          
+            ':event_dot_color' => $eventDotColor,
+            ':include_event_in_mail' => $includeEventInMail
+        ]);
+
+        // Add date ranges if provided
+        if ($eventDateRanges !== null) {
+            foreach ($eventDateRanges as $range) {
+                if (!isset($range['start'])) {
+                    throw new Exception("Date range must include 'start'");
+                }
+                $start = $range['start'];
+                $end = $range['end'] ?? $start;
+                addDateToEvent($eventId, $start, $end);
+            }
+        }
+
+        if (!$isNestedTransaction) {
+            $pdo->commit();
+        }
+        return $eventId;
+    } catch (Exception $e) {
+        if (!$isNestedTransaction) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+/**
+ * Delete an event and ALL its associated data (ranges + ordering) via cascading foreign keys.
+ *
+ * @param array $postData The entire $_POST array passed from the router.
+ * @return void
+ * @throws Exception If eventId is missing or the event is not found
+ */
+function deleteEvent(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+
+    if (empty($eventId)) {
+        throw new Exception("No eventId passed");
+    }
 
     $pdo = getPDO();
     $isNestedTransaction = $pdo->inTransaction();
@@ -22,49 +92,76 @@ function addEvent(array $postData): string {
     }
     
     try {
-        // Validate required fields inside the nested eventData array
-        foreach (['description', 'type', 'color'] as $field) {
-            if (empty($eventData[$field])) {
-                throw new Exception("Missing required field: $field");
-            }
+        $stmt = $pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
+        $stmt->execute([':event_id' => $eventId]);
+
+        if ($stmt->rowCount() === 0) {
+            throw new Exception("Event not found");
         }
 
-        $eventId = $pdo->query("SELECT UUID()")->fetchColumn();
-        $includeInMail = (int)(bool)($eventData['include_in_mail'] ?? false);
-
-        // 1. USE PREPARED STATEMENTS (No quotes needed!)
-        $stmt = $pdo->prepare(
-            "INSERT INTO events (event_id, description, type, color, include_in_mail)
-             VALUES (:event_id, :description, :type, :color, :include_in_mail)"
-        );
-
-        // 2. EXECUTE WITH DATA
-        $stmt->execute([
-            ':event_id' => $eventId,
-            ':description' => $eventData['description'],
-            ':type' => $eventData['type'],
-            ':color' => $eventData['color'],
-            ':include_in_mail' => $includeInMail
-        ]);
-
-        // Add date ranges if provided
-        if ($dateRanges !== null) {
-            foreach ($dateRanges as $range) {
-                if (!isset($range['start'])) {
-                    throw new Exception("Date range must include 'start'");
-                }
-                $start = $range['start'];
-                $end = $range['end'] ?? $start; // Single day if end not provided
-                addDateToEvent($eventId, $start, $end);
-            }
+        if (!$isNestedTransaction) {
+            $pdo->commit();
         }
-
-        $pdo->commit();
-        return $eventId;
     } catch (Exception $e) {
-        $pdo->rollBack();
+        if (!$isNestedTransaction) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
+}
+
+/* ---------------------------------------------------------------------------------------- */
+
+/**
+ * Edit an existing event's details.
+ *
+ * @param array $postData The entire $_POST array passed from the router.
+ * @return void
+ * @throws Exception On validation errors or DB failures
+ */
+function editEvent(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+    $eventData = $postData['eventData'] ?? [];
+
+    if (empty($eventId)) {
+        throw new Exception("Missing eventId.");
+    }
+
+    // Validate required fields
+    foreach (['event_description', 'event_type'] as $field) {
+        if (empty($eventData[$field])) {
+            throw new Exception("Missing required field: $field");
+        }
+    }
+
+    $pdo = getPDO();
+    
+    // Safely capture the optional dot color, falling back to null
+    $eventDotColor = !empty($eventData['event_dot_color']) ? $eventData['event_dot_color'] : null;
+    $includeEventInMail = (int)(bool)($eventData['include_event_in_mail'] ?? false);
+
+    // --- ENCRYPT DESCRIPTION ---
+    $encryptedEventDescription = encryptDescription($eventData['event_description']);
+
+    $stmt = $pdo->prepare(
+        "UPDATE events 
+         SET event_description = :event_description,
+             event_type = :event_type,
+             event_dot_color = :event_dot_color,
+             include_event_in_mail = :include_event_in_mail
+         WHERE event_id = :event_id"
+    );
+    
+    $stmt->execute([
+        ':event_description' => $encryptedEventDescription,
+        ':event_type' => $eventData['event_type'],
+        ':event_dot_color' => $eventDotColor, 
+        ':include_event_in_mail' => $includeEventInMail,
+        ':event_id' => $eventId
+    ]);
+
+    // Note: We don't throw an error on rowCount() === 0 because that just means 
+    // the user clicked "save" without actually changing any data.
 }
 
 /* ---------------------------------------------------------------------------------------- */
@@ -95,6 +192,7 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
             throw new Exception("Start date must be <= end date");
         }
 
+        /*
         // Check if ANY date in the new range already exists for this event
         $stmtExisting = $pdo->prepare(
             "SELECT 1 FROM event_date_ranges
@@ -111,6 +209,7 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
         if ($stmtExisting->fetch()) {
             throw new Exception("Event already exists on one or more dates in this range");
         }
+        */
 
         // Find ALL ranges that overlap or are adjacent to the new range
         $stmtAllRanges = $pdo->prepare(
@@ -127,7 +226,10 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
             $end = new DateTime($range['end_date']);
 
             // Check for overlap or adjacency (within ±1 day)
-            if ($newEnd >= $start->modify('-1 day') && $newStart <= $end->modify('+1 day')) {
+            $checkStart = (clone $start)->modify('-1 day');
+            $checkEnd   = (clone $end)->modify('+1 day');
+
+            if ($newEnd >= $checkStart && $newStart <= $checkEnd) {
                 $rangesToMerge[] = $range;
             }
         }
@@ -235,6 +337,198 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
         }
         throw $e;
     }
+}
+
+/**
+ * Add a new event type to the event_types table.
+ *
+ * @param array $postData The $_POST array containing 'eventType'
+ * @return string The new event_type_id (UUID)
+ * @throws Exception If the type already exists or input is invalid
+ */
+function addEventType(array $postData): string {
+    // Extract the string from the POST array
+    $eventType = $postData['eventType'] ?? '';
+    $eventTypeBackgroundColor = !empty($postData['eventBackgroundColor']) ? $postData['eventBackgroundColor'] : null;
+    
+    if (empty($eventType)) {
+        throw new Exception("Event type cannot be empty.");
+    }
+
+    $pdo = getPDO();
+    $isNestedTransaction = $pdo->inTransaction();
+    if (!$isNestedTransaction) {
+        $pdo->beginTransaction();
+    }
+    try {
+        // Check if type already exists using a prepared statement
+        $stmt = $pdo->prepare("SELECT event_type_id FROM event_types WHERE event_type = :event_type");
+        $stmt->execute([':event_type' => $eventType]);
+        $existingId = $stmt->fetchColumn();
+
+        if ($existingId) {
+            throw new Exception("Event type '$eventType' already exists. ID: $existingId");
+        }
+
+        $eventTypeId = $pdo->query("SELECT UUID()")->fetchColumn();
+        
+        // Insert using a prepared statement
+        $stmtInsert = $pdo->prepare(
+        "INSERT INTO event_types (event_type_id, event_type, event_type_background_color)
+         VALUES (:event_type_id, :event_type, :event_type_background_color)"
+    );
+    $stmtInsert->execute([
+        ':event_type_id' => $eventTypeId,
+        ':event_type' => $eventType,
+        ':event_type_background_color' => $eventTypeBackgroundColor
+    ]);
+
+        if (!$isNestedTransaction) {
+            $pdo->commit();
+        }
+        return $eventTypeId;
+    } catch (Exception $e) {
+        if (!$isNestedTransaction) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+/**
+ * Changes the order of an event on a specific day by swapping it with an adjacent event.
+ *
+ * @param array $postData Contains eventId, month, day, and change (+1 or -1)
+ * @return void
+ * @throws Exception
+ */
+function changeEventPosition(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+    $month = (int)($postData['month'] ?? 0);
+    $day = (int)($postData['day'] ?? 0);
+    $change = (int)($postData['change'] ?? 0); // Expected: 1 (move down) or -1 (move up)
+
+    if (empty($eventId) || empty($month) || empty($day) || empty($change)) {
+        throw new Exception("Missing required parameters for position change.");
+    }
+
+    if ($change !== 1 && $change !== -1) {
+        throw new Exception("Change must be exactly +1 or -1.");
+    }
+
+    $pdo = getPDO();
+    $pdo->beginTransaction();
+
+    try {
+        // 1. Get current position of the target event
+        $stmtCurrent = $pdo->prepare(
+            "SELECT position FROM event_ordering 
+             WHERE event_id = :event_id AND month = :month AND day = :day FOR UPDATE"
+        );
+        $stmtCurrent->execute([
+            ':event_id' => $eventId,
+            ':month' => $month,
+            ':day' => $day
+        ]);
+        $currentPos = $stmtCurrent->fetchColumn();
+
+        if ($currentPos === false) {
+            throw new Exception("Event ordering not found for this date.");
+        }
+
+        $targetPos = (int)$currentPos + $change;
+
+        if ($targetPos < 1) {
+            // Already at the top, do nothing
+            $pdo->commit();
+            return;
+        }
+
+        // 2. Find the event currently occupying the target position
+        $stmtTarget = $pdo->prepare(
+            "SELECT event_id FROM event_ordering 
+             WHERE month = :month AND day = :day AND position = :position FOR UPDATE"
+        );
+        $stmtTarget->execute([
+            ':month' => $month,
+            ':day' => $day,
+            ':position' => $targetPos
+        ]);
+        $targetEventId = $stmtTarget->fetchColumn();
+
+        if ($targetEventId === false) {
+            // No event at target position (already at the bottom), do nothing
+            $pdo->commit();
+            return;
+        }
+
+        // 3. Perform the swap avoiding the unique constraint (month, day, position)
+        $stmtUpdate = $pdo->prepare(
+            "UPDATE event_ordering SET position = :new_pos 
+             WHERE event_id = :event_id AND month = :month AND day = :day"
+        );
+
+        // Step A: Move the blocking event to a temporary safe position (0 is safe as positions start at 1)
+        $stmtUpdate->execute([':new_pos' => 0, ':event_id' => $targetEventId, ':month' => $month, ':day' => $day]);
+        
+        // Step B: Move our primary event to the desired target position
+        $stmtUpdate->execute([':new_pos' => $targetPos, ':event_id' => $eventId, ':month' => $month, ':day' => $day]);
+        
+        // Step C: Move the initially blocking event into the old position
+        $stmtUpdate->execute([':new_pos' => $currentPos, ':event_id' => $targetEventId, ':month' => $month, ':day' => $day]);
+
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+
+/**
+ * Fetches all calendar data (events, date ranges, and orderings) in a single query batch.
+ * 
+ * Automatically decrypts event descriptions before returning.
+ *
+ * @return array{events: array, dateRanges: array, orderings: array, eventTypes: array} Associative array of calendar data.
+ * @throws PDOException If a database query fails.
+ * @throws Exception If description decryption fails.
+ */
+function getAllCalendarData(): array {
+    $pdo = getPDO();
+
+    // 1. Get all events (with type names)
+    $events = $pdo->query(
+        "SELECT e.*, et.event_type AS event_type_name
+         FROM events e
+         JOIN event_types et ON e.event_type = et.event_type_id"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // --- DECRYPT ALL DESCRIPTIONS ---
+    foreach ($events as &$event) {
+        $event['event_description'] = decryptDescription($event['event_description']);
+    }
+
+    // 2. Get all date ranges
+    $eventDateRanges = $pdo->query(
+        "SELECT * FROM event_date_ranges"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // 3. Get all orderings
+    $orderings = $pdo->query(
+        "SELECT * FROM event_ordering"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // 4. Get all event type
+    $eventTypes = $pdo->query(
+        "SELECT * FROM event_types"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    return [
+        'events' => $events,
+        'eventDateRanges' => $eventDateRanges,
+        'orderings' => $orderings,
+        'eventTypes' => $eventTypes
+    ];
 }
 
 ?>

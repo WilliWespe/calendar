@@ -24,16 +24,33 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Tabellenstruktur für Tabelle `event_types`
+--
+
+CREATE TABLE `event_types` (
+  `event_type_id` char(36) NOT NULL,
+  `event_type` varchar(50) NOT NULL,
+  `event_type_background_color` varchar(6) DEFAULT NULL,
+  PRIMARY KEY (`event_type_id`),
+  UNIQUE KEY `uk_event_type` (`event_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Tabellenstruktur für Tabelle `events`
 --
 
 CREATE TABLE `events` (
   `event_id` char(36) NOT NULL,
-  `description` varchar(2000) NOT NULL,
-  `type` varchar(50) NOT NULL,
-  `color` varchar(7) NOT NULL,
-  `include_in_mail` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `event_description` varchar(2000) NOT NULL,
+  `event_type` char(36) NOT NULL,
+  `event_dot_color` varchar(6) DEFAULT NULL,
+  `include_event_in_mail` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`event_id`),
+  KEY `fk_events_type` (`event_type`),
+  CONSTRAINT `fk_events_type` FOREIGN KEY (`event_type`) REFERENCES `event_types` (`event_type_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -46,7 +63,12 @@ CREATE TABLE `event_date_ranges` (
   `range_id` char(36) NOT NULL,
   `event_id` char(36) NOT NULL,
   `start_date` date NOT NULL,
-  `end_date` date NOT NULL
+  `end_date` date NOT NULL,
+  PRIMARY KEY (`range_id`),
+  KEY `idx_event` (`event_id`),
+  KEY `idx_start_date` (`start_date`),
+  KEY `idx_end_date` (`end_date`),
+  CONSTRAINT `event_date_ranges_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
@@ -61,51 +83,14 @@ CREATE TABLE `event_ordering` (
   `event_id` char(36) NOT NULL,
   `month` tinyint(4) NOT NULL,
   `day` tinyint(4) NOT NULL,
-  `position` int(11) NOT NULL
+  `position` int(11) NOT NULL,
+  PRIMARY KEY (`ordering_id`),
+  UNIQUE KEY `uk_month_day_position` (`month`,`day`,`position`),
+  UNIQUE KEY `uk_event_month_day` (`event_id`,`month`,`day`),
+  CONSTRAINT `event_ordering_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Indizes der exportierten Tabellen
---
 
---
--- Indizes für die Tabelle `events`
---
-ALTER TABLE `events`
-  ADD PRIMARY KEY (`event_id`);
-
---
--- Indizes für die Tabelle `event_date_ranges`
---
-ALTER TABLE `event_date_ranges`
-  ADD PRIMARY KEY (`range_id`),
-  ADD KEY `idx_event` (`event_id`),
-  ADD KEY `idx_start_date` (`start_date`),
-  ADD KEY `idx_end_date` (`end_date`);
-
---
--- Indizes für die Tabelle `event_ordering`
---
-ALTER TABLE `event_ordering`
-  ADD PRIMARY KEY (`ordering_id`),
-  ADD UNIQUE KEY `uk_month_day_position` (`month`,`day`,`position`),
-  ADD UNIQUE KEY `uk_event_month_day` (`event_id`,`month`,`day`);
-
---
--- Constraints der exportierten Tabellen
---
-
---
--- Constraints der Tabelle `event_date_ranges`
---
-ALTER TABLE `event_date_ranges`
-  ADD CONSTRAINT `event_date_ranges_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE;
-
---
--- Constraints der Tabelle `event_ordering`
---
-ALTER TABLE `event_ordering`
-  ADD CONSTRAINT `event_ordering_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
