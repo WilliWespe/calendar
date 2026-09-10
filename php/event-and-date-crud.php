@@ -43,7 +43,7 @@ function addEvent(array $postData): string {
             ':event_id' => $eventId,
             ':event_description' => $encryptedEventDescription,  
             ':event_type' => $eventData['event_type'],          
-            ':event_dot_color' => $eventDotColor, // 3. Insert the parsed variable
+            ':event_dot_color' => $eventDotColor,
             ':include_event_in_mail' => $includeEventInMail
         ]);
 
@@ -108,6 +108,60 @@ function deleteEvent(array $postData): void {
         }
         throw $e;
     }
+}
+
+/* ---------------------------------------------------------------------------------------- */
+
+/**
+ * Edit an existing event's details.
+ *
+ * @param array $postData The entire $_POST array passed from the router.
+ * @return void
+ * @throws Exception On validation errors or DB failures
+ */
+function editEvent(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+    $eventData = $postData['eventData'] ?? [];
+
+    if (empty($eventId)) {
+        throw new Exception("Missing eventId.");
+    }
+
+    // Validate required fields
+    foreach (['event_description', 'event_type'] as $field) {
+        if (empty($eventData[$field])) {
+            throw new Exception("Missing required field: $field");
+        }
+    }
+
+    $pdo = getPDO();
+    
+    // Safely capture the optional dot color, falling back to null
+    $eventDotColor = !empty($eventData['event_dot_color']) ? $eventData['event_dot_color'] : null;
+    $includeEventInMail = (int)(bool)($eventData['include_event_in_mail'] ?? false);
+
+    // --- ENCRYPT DESCRIPTION ---
+    $encryptedEventDescription = encryptDescription($eventData['event_description']);
+
+    $stmt = $pdo->prepare(
+        "UPDATE events 
+         SET event_description = :event_description,
+             event_type = :event_type,
+             event_dot_color = :event_dot_color,
+             include_event_in_mail = :include_event_in_mail
+         WHERE event_id = :event_id"
+    );
+    
+    $stmt->execute([
+        ':event_description' => $encryptedEventDescription,
+        ':event_type' => $eventData['event_type'],
+        ':event_dot_color' => $eventDotColor, 
+        ':include_event_in_mail' => $includeEventInMail,
+        ':event_id' => $eventId
+    ]);
+
+    // Note: We don't throw an error on rowCount() === 0 because that just means 
+    // the user clicked "save" without actually changing any data.
 }
 
 /* ---------------------------------------------------------------------------------------- */

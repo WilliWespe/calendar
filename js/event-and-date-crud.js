@@ -80,6 +80,43 @@ async function deleteEvent(eventId) {
     }
 }
 
+/**
+ * Updates an existing event.
+ * 
+ * @param {string} eventId - The UUID of the event.
+ * @param {string} eventDescription - The new text description.
+ * @param {string} eventType - The UUID of the event_type.
+ * @param {string|null} eventDotColor - Hex color (without #) or null.
+ * @param {number|boolean} includeEventInMail - 1/true or 0/false.
+ */
+async function editEvent(eventId, eventDescription, eventType, eventDotColor = null, includeEventInMail = 1) {
+    
+    let payload = {
+        action: "editEvent",
+        eventId: eventId,
+        eventData: {
+            event_description: eventDescription,
+            event_type: eventType,
+            event_dot_color: eventDotColor,
+            include_event_in_mail: includeEventInMail ? 1 : 0
+        }
+    };
+
+    try {
+        await $.ajax({
+            url: 'php/routing.php',
+            type: 'POST',
+            data: payload 
+        });
+
+        console.log("Event successfully updated");
+        // location.reload(); or call storeCalendarDataInRAM() to refresh UI
+
+    } catch (xhr) {
+        console.error("Server returned an error:", xhr.status, xhr.responseText);
+    }
+}
+
 async function addEventType(eventType, eventBackgroundColor = null) {
     
     // 1. Create a clean JS object. 
