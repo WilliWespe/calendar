@@ -146,6 +146,39 @@ async function addEventType(eventType, eventBackgroundColor = null) {
 }
 
 /**
+ * Swaps the position of an event on a specific day.
+ * 
+ * @param {string} eventId - The UUID of the event.
+ * @param {number} month - The month (1-12).
+ * @param {number} day - The day (1-31).
+ * @param {number} change - Pass -1 to move up (decrease position), or 1 to move down (increase position).
+ */
+async function changeEventPosition(eventId, month, day, change) {
+    let payload = {
+        action: "changeEventPosition",
+        eventId: eventId,
+        month: month,
+        day: day,
+        change: change
+    };
+
+    try {
+        await $.ajax({
+            url: 'php/routing.php',
+            type: 'POST',
+            data: payload 
+        });
+
+        console.log("Position successfully updated");
+        // You should re-render or re-fetch your calendar data here
+        // await storeCalendarDataInRAM(); 
+
+    } catch (xhr) {
+        console.error("Failed to change position:", xhr.status, xhr.responseText);
+    }
+}
+
+/**
  * Asynchronously fetches all calendar events, date ranges, and orderings.
  * 
  * @returns {Promise<{events: Array, dateRanges: Array, orderings: Array, eventTypes: Array}>} 

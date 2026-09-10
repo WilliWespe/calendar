@@ -396,6 +396,95 @@ function addEventType(array $postData): string {
 }
 
 /**
+ * Changes the order of an event on a specific day by swapping it with an adjacent event.
+ *
+ * @param array $postData Contains eventId, month, day, and change (+1 or -1)
+ * @return void
+ * @throws Exception
+ */
+function changeEventPosition(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+    $month = (int)($postData['month'] ?? 0);
+    $day = (int)($postData['day'] ?? 0);
+    $change = (int)($postData['change'] ?? 0); // Expected: 1 (move down) or -1 (move up)
+
+    if (empty($eventId) || empty($month) || empty($day) || empty($change)) {
+        throw new Exception("Missing required parameters for position change.");
+    }
+
+    if ($change !== 1 && $change !== -1) {
+        throw new Exception("Change must be exactly +1 or -1.");
+    }
+
+    $pdo = getPDO();
+    $pdo->beginTransaction();
+
+    try {
+        // 1. Get current position of the target event
+        $stmtCurrent = $pdo->prepare(
+            "SELECT position FROM event_ordering 
+             WHERE event_id = :event_id AND month = :month AND day = :day FOR UPDATE"
+        );
+        $stmtCurrent->execute([
+            ':event_id' => $eventId,
+            ':month' => $month,
+            ':day' => $day
+        ]);
+        $currentPos = $stmtCurrent->fetchColumn();
+
+        if ($currentPos === false) {
+            throw new Exception("Event ordering not found for this date.");
+        }
+
+        $targetPos = (int)$currentPos + $change;
+
+        if ($targetPos < 1) {
+            // Already at the top, do nothing
+            $pdo->commit();
+            return;
+        }
+
+        // 2. Find the event currently occupying the target position
+        $stmtTarget = $pdo->prepare(
+            "SELECT event_id FROM event_ordering 
+             WHERE month = :month AND day = :day AND position = :position FOR UPDATE"
+        );
+        $stmtTarget->execute([
+            ':month' => $month,
+            ':day' => $day,
+            ':position' => $targetPos
+        ]);
+        $targetEventId = $stmtTarget->fetchColumn();
+
+        if ($targetEventId === false) {
+            // No event at target position (already at the bottom), do nothing
+            $pdo->commit();
+            return;
+        }
+
+        // 3. Perform the swap avoiding the unique constraint (month, day, position)
+        $stmtUpdate = $pdo->prepare(
+            "UPDATE event_ordering SET position = :new_pos 
+             WHERE event_id = :event_id AND month = :month AND day = :day"
+        );
+
+        // Step A: Move the blocking event to a temporary safe position (0 is safe as positions start at 1)
+        $stmtUpdate->execute([':new_pos' => 0, ':event_id' => $targetEventId, ':month' => $month, ':day' => $day]);
+        
+        // Step B: Move our primary event to the desired target position
+        $stmtUpdate->execute([':new_pos' => $targetPos, ':event_id' => $eventId, ':month' => $month, ':day' => $day]);
+        
+        // Step C: Move the initially blocking event into the old position
+        $stmtUpdate->execute([':new_pos' => $currentPos, ':event_id' => $targetEventId, ':month' => $month, ':day' => $day]);
+
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+
+/**
  * Fetches all calendar data (events, date ranges, and orderings) in a single query batch.
  * 
  * Automatically decrypts event descriptions before returning.
