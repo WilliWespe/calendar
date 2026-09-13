@@ -3,6 +3,8 @@
 // A database connection is required to run the here implemented functions
 require_once 'get-db-connection.php';
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Create a new event with optional date range(s).
  *
@@ -71,6 +73,8 @@ function addEvent(array $postData): string {
     }
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Delete an event and ALL its associated data (ranges + ordering) via cascading foreign keys.
  *
@@ -110,7 +114,7 @@ function deleteEvent(array $postData): void {
     }
 }
 
-/* ---------------------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Edit an existing event's details.
@@ -164,7 +168,7 @@ function editEvent(array $postData): void {
     // the user clicked "save" without actually changing any data.
 }
 
-/* ---------------------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Add a date or date range to an event.
@@ -339,6 +343,8 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
     }
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Add a new event type to the event_types table.
  *
@@ -394,6 +400,8 @@ function addEventType(array $postData): string {
         throw $e;
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Changes the order of an event on a specific day by swapping it with an adjacent event.
@@ -483,6 +491,8 @@ function changeEventPosition(array $postData): void {
         throw $e;
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Fetches all calendar data (events, date ranges, and orderings) in a single query batch.

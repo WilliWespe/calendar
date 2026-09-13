@@ -5,6 +5,8 @@ require_once 'helper-functions.php';
 // Adjust this path to point to where your .env file lives relative to routing.php
 loadEnv(__DIR__ . '/../.env');
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Encrypt a string using AES-256-CBC.
  * @param string $plaintext The text to encrypt.
@@ -33,6 +35,8 @@ function encryptDescription(string $plaintext): string {
     }
     return base64_encode($iv . $ciphertext);
 }
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Decrypt a string using AES-256-CBC.

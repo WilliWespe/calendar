@@ -59,6 +59,8 @@ async function addEvent() {
     } 
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Deletes an event and all its associated data from the database.
  * 
@@ -91,6 +93,8 @@ async function deleteEvent(eventId) {
         console.error("Server returned an error:", xhr.status, xhr.responseText);
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Updates an existing event.
@@ -130,6 +134,8 @@ async function editEvent(eventId, eventDescription, eventType, eventDotColor = n
     }
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Adds a new event type to the database, optionally with a background color.
  * 
@@ -165,6 +171,8 @@ async function addEventType(eventType, eventBackgroundColor = null) {
     }
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Swaps the position of an event on a specific day.
  * 
@@ -199,6 +207,8 @@ async function changeEventPosition(eventId, month, day, change) {
     }
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Asynchronously fetches all calendar events, date ranges, and orderings.
  * 
@@ -229,6 +239,8 @@ async function fetchCalendarData() {
         return { events: [], eventDateRanges: [], orderings: [] };
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Fetches calendar data and processes it into Maps for O(1) lookups in the UI.
