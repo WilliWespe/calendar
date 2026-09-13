@@ -14,6 +14,7 @@ $.ajaxSetup({
     }
 });
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Creates new events using hardcoded mockup data and sends them to the server.
