@@ -26,6 +26,8 @@ function getConfig(): array {
     return $config;
 }
 
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 /**
  * Custom function to parse and load a .env file into environment variables during developement. Can 
  *

@@ -7,7 +7,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once 'get-db-connection.php';
 require_once 'event-and-date-crud.php';
-require_once 'crypt.php'; 
+require_once 'crypt.php';
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Main AJAX Router for Calendar Operations.
