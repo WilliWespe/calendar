@@ -1,3 +1,9 @@
+/**
+ * Creates new events using hardcoded mockup data and sends them to the server.
+ * Iterates through a predefined list of events and date ranges, sending an AJAX POST request for each.
+ * 
+ * @returns {Promise<void>}
+ */
 async function addEvent() {
     var mockupDataAddEventList = [
         {
@@ -53,6 +59,12 @@ async function addEvent() {
     } 
 }
 
+/**
+ * Deletes an event and all its associated data from the database.
+ * 
+ * @param {string} eventId - The UUID of the event to delete.
+ * @returns {Promise<void>}
+ */
 async function deleteEvent(eventId) {
     
     // 1. Create a clean JS object. 
@@ -88,6 +100,7 @@ async function deleteEvent(eventId) {
  * @param {string} eventType - The UUID of the event_type.
  * @param {string|null} eventDotColor - Hex color (without #) or null.
  * @param {number|boolean} includeEventInMail - 1/true or 0/false.
+ * @returns {Promise<void>}
  */
 async function editEvent(eventId, eventDescription, eventType, eventDotColor = null, includeEventInMail = 1) {
     
@@ -117,6 +130,13 @@ async function editEvent(eventId, eventDescription, eventType, eventDotColor = n
     }
 }
 
+/**
+ * Adds a new event type to the database, optionally with a background color.
+ * 
+ * @param {string} eventType - The name of the new event type.
+ * @param {string|null} [eventBackgroundColor=null] - The hex color code (without #) for the background, or null.
+ * @returns {Promise<void>}
+ */
 async function addEventType(eventType, eventBackgroundColor = null) {
     
     // 1. Create a clean JS object. 
@@ -152,6 +172,7 @@ async function addEventType(eventType, eventBackgroundColor = null) {
  * @param {number} month - The month (1-12).
  * @param {number} day - The day (1-31).
  * @param {number} change - Pass -1 to move up (decrease position), or 1 to move down (increase position).
+ * @returns {Promise<void>}
  */
 async function changeEventPosition(eventId, month, day, change) {
     let payload = {
@@ -181,7 +202,7 @@ async function changeEventPosition(eventId, month, day, change) {
 /**
  * Asynchronously fetches all calendar events, date ranges, and orderings.
  * 
- * @returns {Promise<{events: Array, dateRanges: Array, orderings: Array, eventTypes: Array}>} 
+ * @returns {Promise<{events: Array, eventDateRanges: Array, orderings: Array, eventTypes: Array}>} 
  */
 async function fetchCalendarData() {
     let payload = {
@@ -209,6 +230,12 @@ async function fetchCalendarData() {
     }
 }
 
+/**
+ * Fetches calendar data and processes it into Maps for O(1) lookups in the UI.
+ * Logs out the processed structures for verification.
+ * 
+ * @returns {Promise<void>}
+ */
 async function storeCalendarDataInRAM(){
     // After fetching all data:
     const { events, eventDateRanges, orderings, eventTypes } = await fetchCalendarData();
@@ -261,7 +288,12 @@ async function storeCalendarDataInRAM(){
 }
 
 /*
-
+/**
+ * Resolves clicked cell events, sorts them based on ordering, and triggers UI rendering.
+ * 
+ * @param {string|Date} date - The date of the cell clicked, formatted appropriately.
+ * @returns {void}
+ *\/
 // On cell click (instant, no network request):
 function onCellClick(date) {
     const events = eventsByDate.get(date) || [];

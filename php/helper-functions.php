@@ -1,14 +1,28 @@
 <?php
 
+/**
+ * Loads and caches the application configuration from the app.config INI file.
+ * 
+ * Uses a static variable to ensure the file system is only accessed once 
+ * per request lifecycle, preventing redundant disk reads on subsequent calls.
+ *
+ * @return array A multidimensional array containing the parsed configuration settings.
+ * @throws RuntimeException If the app.config file does not exist at the expected path.
+ */
 function getConfig(): array {
     static $config = null;
+    
     if ($config === null) {
         $configFile = __DIR__ . '/../app.config';
+        
         if (!file_exists($configFile)) {
             throw new RuntimeException("Configuration file missing: {$configFile}");
         }
-        $config = parse_ini_file($configFile, true); // true parses sections into multidimensional arrays
+        
+        // The 'true' parameter ensures INI sections are parsed into nested arrays
+        $config = parse_ini_file($configFile, true); 
     }
+    
     return $config;
 }
 
