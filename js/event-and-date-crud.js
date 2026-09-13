@@ -1,3 +1,20 @@
+// Automatically append the CSRF token to all jQuery AJAX POST requests
+$.ajaxSetup({
+    beforeSend: function(jqXHR, settings) {
+        if (settings.type.toUpperCase() === 'POST') {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            // Append token whether data is a string or an object
+            if (typeof settings.data === 'string') {
+                settings.data += '&csrf_token=' + encodeURIComponent(csrfToken);
+            } else if (typeof settings.data === 'object') {
+                settings.data.csrf_token = csrfToken;
+            }
+        }
+    }
+});
+
+
 /**
  * Creates new events using hardcoded mockup data and sends them to the server.
  * Iterates through a predefined list of events and date ranges, sending an AJAX POST request for each.

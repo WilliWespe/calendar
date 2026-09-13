@@ -1,5 +1,10 @@
 <?php
 
+// Start the session at the very top to access $_SESSION
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'get-db-connection.php';
 require_once 'event-and-date-crud.php';
 require_once 'crypt.php'; 
@@ -15,6 +20,17 @@ require_once 'crypt.php';
  * HTTP status code alongside the error message.
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
+
+    // --- CSRF VALIDATION ---
+    $clientToken = $_POST['csrf_token'] ?? '';
+    $serverToken = $_SESSION['csrf_token'] ?? '';
+    
+    if (empty($clientToken) || !hash_equals($serverToken, $clientToken)) {
+        http_response_code(403); // 403 Forbidden
+        echo "CSRF token validation failed.";
+        exit;
+    }
+    // -----------------------
     
     $action = $_POST['action'];
     

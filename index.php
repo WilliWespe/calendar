@@ -13,6 +13,8 @@ require_once __DIR__ . '/php/translate.php';
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <meta name="description" content="">
     <meta name="author" content="">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(getCsrfToken()); ?>">
+    
     <title><?php echo ucfirst(translate('calendar')) ?></title>	
 
     <link id="icon" rel="shortcut icon" type="image/x-icon" href="../favicon.ico"/>
