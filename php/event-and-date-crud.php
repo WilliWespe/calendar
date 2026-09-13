@@ -8,9 +8,9 @@ require_once 'get-db-connection.php';
 /**
  * Create a new event with optional date range(s).
  *
- * @param array $postData The entire $_POST array passed from the router.
- * @return string The new event_id
- * @throws Exception On validation errors or DB failures
+ * @param array $postData The $_POST array containing 'eventData' and 'eventDateRanges'.
+ * @return string The newly generated event_id UUID.
+ * @throws Exception On validation errors or DB failures.
  */
 function addEvent(array $postData): string {
     $eventData = $postData['eventData'] ?? [];
@@ -23,7 +23,6 @@ function addEvent(array $postData): string {
     }
 
     try {
-        // Validate required fields
         foreach (['event_description', 'event_type'] as $field) {
             if (empty($eventData[$field])) {
                 throw new Exception("Missing required field: $field");
@@ -34,7 +33,6 @@ function addEvent(array $postData): string {
         $includeEventInMail = (int)(bool)($eventData['include_event_in_mail'] ?? false);
         $eventDotColor = !empty($eventData['event_dot_color']) ? $eventData['event_dot_color'] : null;
 
-        // --- ENCRYPT DESCRIPTION ---
         $encryptedEventDescription = encryptDescription($eventData['event_description']);
 
         $stmt = $pdo->prepare(
@@ -49,7 +47,6 @@ function addEvent(array $postData): string {
             ':include_event_in_mail' => $includeEventInMail
         ]);
 
-        // Add date ranges if provided
         if ($eventDateRanges !== null) {
             foreach ($eventDateRanges as $range) {
                 if (!isset($range['start'])) {
@@ -57,7 +54,13 @@ function addEvent(array $postData): string {
                 }
                 $start = $range['start'];
                 $end = $range['end'] ?? $start;
-                addDateToEvent($eventId, $start, $end);
+                
+                // Pass as an array instead of discrete string arguments
+                addDateToEvent([
+                    'eventId' => $eventId,
+                    'startDate' => $start,
+                    'endDate' => $end
+                ]);
             }
         }
 
@@ -171,18 +174,24 @@ function editEvent(array $postData): void {
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
- * Add a date or date range to an event.
- * Automatically merges with existing ranges if they overlap or are adjacent.
+ * Add a date or date range to an event. 
+ * Relies on the centralized reconcile helper for merging overlaps and generating orderings.
  *
- * @param string $eventId
- * @param string $startDate (YYYY-MM-DD)
- * @param string|null $endDate (YYYY-MM-DD, optional; if null, treats as single day)
- * @throws Exception On invalid dates or overlaps
+ * @param array $postData Contains 'eventId', 'startDate', and optional 'endDate'.
+ * @return void
+ * @throws Exception On invalid dates.
  */
-function addDateToEvent(string $eventId, string $startDate, ?string $endDate = null): void {
+function addDateToEvent(array $postData): void {
+    $eventId = $postData['eventId'] ?? '';
+    $startDate = $postData['startDate'] ?? '';
+    $endDate = !empty($postData['endDate']) ? $postData['endDate'] : null;
+
+    if (empty($eventId) || empty($startDate)) {
+        throw new Exception("Missing required eventId or startDate.");
+    }
+
     $pdo = getPDO();
     
-    // Check if a transaction is already running from a parent function
     $isNestedTransaction = $pdo->inTransaction();
     if (!$isNestedTransaction) {
         $pdo->beginTransaction();
@@ -196,149 +205,112 @@ function addDateToEvent(string $eventId, string $startDate, ?string $endDate = n
             throw new Exception("Start date must be <= end date");
         }
 
-        /*
-        // Check if ANY date in the new range already exists for this event
-        $stmtExisting = $pdo->prepare(
-            "SELECT 1 FROM event_date_ranges
-             WHERE event_id = :event_id
-               AND start_date <= :new_end
-               AND end_date >= :new_start"
-        );
-        $stmtExisting->execute([
-            ':event_id' => $eventId,
-            ':new_end' => $newEnd->format('Y-m-d'),
-            ':new_start' => $newStart->format('Y-m-d')
-        ]);
-        
-        if ($stmtExisting->fetch()) {
-            throw new Exception("Event already exists on one or more dates in this range");
-        }
-        */
-
-        // Find ALL ranges that overlap or are adjacent to the new range
-        $stmtAllRanges = $pdo->prepare(
-            "SELECT range_id, start_date, end_date
-             FROM event_date_ranges
-             WHERE event_id = :event_id"
-        );
-        $stmtAllRanges->execute([':event_id' => $eventId]);
-        $allRanges = $stmtAllRanges->fetchAll(PDO::FETCH_ASSOC);
-
-        $rangesToMerge = [];
-        foreach ($allRanges as $range) {
-            $start = new DateTime($range['start_date']);
-            $end = new DateTime($range['end_date']);
-
-            // Check for overlap or adjacency (within ±1 day)
-            $checkStart = (clone $start)->modify('-1 day');
-            $checkEnd   = (clone $end)->modify('+1 day');
-
-            if ($newEnd >= $checkStart && $newStart <= $checkEnd) {
-                $rangesToMerge[] = $range;
-            }
-        }
-
-        // Calculate the FINAL MERGED RANGE
-        $finalStart = clone $newStart;
-        $finalEnd = clone $newEnd;
-
-        foreach ($rangesToMerge as $range) {
-            $start = new DateTime($range['start_date']);
-            $end = new DateTime($range['end_date']);
-            if ($start < $finalStart) $finalStart = clone $start;
-            if ($end > $finalEnd) $finalEnd = clone $end;
-        }
-
-        // Delete all ranges that will be merged
-        if (!empty($rangesToMerge)) {
-            // Prepare ONCE outside the loop for performance
-            $stmtDelete = $pdo->prepare("DELETE FROM event_date_ranges WHERE range_id = :range_id");
-            foreach ($rangesToMerge as $range) {
-                $stmtDelete->execute([':range_id' => $range['range_id']]);
-            }
-        }
-
-        // Create the new merged range
+        // 1. Insert the raw unmerged range
         $rangeId = $pdo->query("SELECT UUID()")->fetchColumn();
-        $stmtInsertRange = $pdo->prepare(
+        $stmtInsert = $pdo->prepare(
             "INSERT INTO event_date_ranges (range_id, event_id, start_date, end_date)
              VALUES (:range_id, :event_id, :start_date, :end_date)"
         );
-        $stmtInsertRange->execute([
+        $stmtInsert->execute([
             ':range_id' => $rangeId,
             ':event_id' => $eventId,
-            ':start_date' => $finalStart->format('Y-m-d'),
-            ':end_date' => $finalEnd->format('Y-m-d')
+            ':start_date' => $newStart->format('Y-m-d'),
+            ':end_date' => $newEnd->format('Y-m-d')
         ]);
 
-        // Ensure ordering exists for EVERY UNIQUE MM-DD in the final range
-        $current = clone $finalStart;
-        $endLoop = clone $finalEnd;
-        $processedMM_DD = []; 
-        
-        // Prepare ordering queries ONCE before the loop
-        $stmtCheckOrdering = $pdo->prepare(
-            "SELECT 1 FROM event_ordering
-             WHERE event_id = :event_id AND month = :month AND day = :day"
-        );
-        
-        $stmtGetPosition = $pdo->prepare(
-            "SELECT COALESCE(MAX(position), 0) + 1
-             FROM event_ordering
-             WHERE month = :month AND day = :day"
-        );
-        
-        $stmtInsertOrdering = $pdo->prepare(
-            "INSERT INTO event_ordering (ordering_id, event_id, month, day, position)
-             VALUES (:ordering_id, :event_id, :month, :day, :position)"
-        );
+        // 2. Centralized merge and order synchronization
+        reconcileEventRangesAndOrdering($eventId, $pdo);
 
-        while ($current <= $endLoop) {
-            $month = (int)$current->format('n');
-            $day = (int)$current->format('j');
-            $mm_dd = "$month-$day";
-
-            if (in_array($mm_dd, $processedMM_DD)) {
-                $current->add(new DateInterval('P1D'));
-                continue;
-            }
-            $processedMM_DD[] = $mm_dd;
-
-            // Check if ordering already exists
-            $stmtCheckOrdering->execute([
-                ':event_id' => $eventId, 
-                ':month' => $month, 
-                ':day' => $day
-            ]);
-            
-            if (!$stmtCheckOrdering->fetch()) {
-                // Get next available position
-                $stmtGetPosition->execute([':month' => $month, ':day' => $day]);
-                $position = $stmtGetPosition->fetchColumn();
-                
-                $orderingId = $pdo->query("SELECT UUID()")->fetchColumn();
-                
-                // Insert ordering
-                $stmtInsertOrdering->execute([
-                    ':ordering_id' => $orderingId,
-                    ':event_id' => $eventId,
-                    ':month' => $month,
-                    ':day' => $day,
-                    ':position' => $position
-                ]);
-            }
-            $current->add(new DateInterval('P1D'));
-        }
-
-        // Only commit if this function started the transaction
         if (!$isNestedTransaction) {
             $pdo->commit();
         }
     } catch (Exception $e) {
-        // Only roll back if this function started the transaction
         if (!$isNestedTransaction) {
             $pdo->rollBack();
         }
+        throw $e;
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
+ * Edits an existing date range limits and reconciles the event's overall schedule.
+ *
+ * @param array $postData Contains 'rangeId', 'eventId', 'startDate', and 'endDate'.
+ * @return void
+ * @throws Exception On invalid input or DB failure.
+ */
+function editEventDateRange(array $postData): void {
+    $rangeId = $postData['rangeId'] ?? '';
+    $eventId = $postData['eventId'] ?? '';
+    $startDate = $postData['startDate'] ?? '';
+    $endDate = $postData['endDate'] ?? '';
+
+    if (empty($rangeId) || empty($eventId) || empty($startDate) || empty($endDate)) {
+        throw new Exception("Missing parameters for editing date range.");
+    }
+    
+    if (new DateTime($startDate) > new DateTime($endDate)) {
+        throw new Exception("Start date must be <= end date");
+    }
+
+    $pdo = getPDO();
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE event_date_ranges 
+             SET start_date = :start, end_date = :end 
+             WHERE range_id = :range_id AND event_id = :event_id"
+        );
+        $stmt->execute([
+            ':start' => $startDate,
+            ':end' => $endDate,
+            ':range_id' => $rangeId,
+            ':event_id' => $eventId
+        ]);
+
+        reconcileEventRangesAndOrdering($eventId, $pdo);
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
+ * Deletes a specific date range and cleans up subsequent ordering gaps.
+ *
+ * @param array $postData Contains 'rangeId' and 'eventId'.
+ * @return void
+ * @throws Exception On invalid input or DB failure.
+ */
+function deleteEventDateRange(array $postData): void {
+    $rangeId = $postData['rangeId'] ?? '';
+    $eventId = $postData['eventId'] ?? '';
+
+    if (empty($rangeId) || empty($eventId)) {
+        throw new Exception("Missing parameters for deleting date range.");
+    }
+
+    $pdo = getPDO();
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            "DELETE FROM event_date_ranges 
+             WHERE range_id = :range_id AND event_id = :event_id"
+        );
+        $stmt->execute([
+            ':range_id' => $rangeId,
+            ':event_id' => $eventId
+        ]);
+
+        reconcileEventRangesAndOrdering($eventId, $pdo);
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
         throw $e;
     }
 }
@@ -539,6 +511,158 @@ function getAllCalendarData(): array {
         'orderings' => $orderings,
         'eventTypes' => $eventTypes
     ];
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
+ * Core engine for merging overlaps/adjacent ranges and keeping orderings strictly synchronized.
+ * 
+ * 1. Fetches all ranges for an event.
+ * 2. Merges overlaps and gaps <= 1 day.
+ * 3. Overwrites old ranges with cleanly merged ones.
+ * 4. Checks required `month-day` orderings vs existing.
+ * 5. Deletes orphaned days and shifts lower events up.
+ * 6. Adds missing days at the bottom of the list.
+ *
+ * @param string $eventId The event to reconcile.
+ * @param PDO $pdo The active database connection (inside a transaction).
+ * @return void
+ */
+function reconcileEventRangesAndOrdering(string $eventId, PDO $pdo): void {
+    // 1. Fetch all current ranges for this event, sorted chronologically
+    $stmtAll = $pdo->prepare(
+        "SELECT range_id, start_date, end_date 
+         FROM event_date_ranges 
+         WHERE event_id = :event_id 
+         ORDER BY start_date ASC"
+    );
+    $stmtAll->execute([':event_id' => $eventId]);
+    $ranges = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+
+    $coveredDays = [];
+
+    if (!empty($ranges)) {
+        $merged = [];
+        $current = null;
+        
+        // Merge logic for overlaps and adjacent days
+        foreach ($ranges as $r) {
+            $start = new DateTime($r['start_date']);
+            $end = new DateTime($r['end_date']);
+            
+            if ($current === null) {
+                $current = ['start' => $start, 'end' => $end];
+            } else {
+                $checkStart = (clone $start)->modify('-1 day');
+                if ($current['end'] >= $checkStart) {
+                    if ($end > $current['end']) {
+                        $current['end'] = clone $end;
+                    }
+                } else {
+                    $merged[] = $current;
+                    $current = ['start' => $start, 'end' => $end];
+                }
+            }
+        }
+        if ($current !== null) {
+            $merged[] = $current;
+        }
+
+        // Wipe old unmerged ranges
+        $pdo->prepare("DELETE FROM event_date_ranges WHERE event_id = :event_id")->execute([':event_id' => $eventId]);
+        
+        // Insert clean merged ranges
+        $stmtInsertRange = $pdo->prepare(
+            "INSERT INTO event_date_ranges (range_id, event_id, start_date, end_date) 
+             VALUES (:range_id, :event_id, :start, :end)"
+        );
+        
+        foreach ($merged as $m) {
+            $stmtInsertRange->execute([
+                ':range_id' => $pdo->query("SELECT UUID()")->fetchColumn(),
+                ':event_id' => $eventId,
+                ':start' => $m['start']->format('Y-m-d'),
+                ':end' => $m['end']->format('Y-m-d')
+            ]);
+            
+            // Map every single MM-DD required by this final range
+            $dt = clone $m['start'];
+            while ($dt <= $m['end']) {
+                $month = (int)$dt->format('n');
+                $day = (int)$dt->format('j');
+                $coveredDays["$month-$day"] = ['month' => $month, 'day' => $day];
+                $dt->add(new DateInterval('P1D'));
+            }
+        }
+    }
+
+    // 2. Synchronize Event Orderings
+    $stmtOrderings = $pdo->prepare(
+        "SELECT month, day, position 
+         FROM event_ordering 
+         WHERE event_id = :event_id"
+    );
+    $stmtOrderings->execute([':event_id' => $eventId]);
+    $existing = $stmtOrderings->fetchAll(PDO::FETCH_ASSOC);
+
+    $existingDays = [];
+    $stmtDel = $pdo->prepare(
+        "DELETE FROM event_ordering 
+         WHERE event_id = :event_id AND month = :month AND day = :day"
+    );
+    $stmtShift = $pdo->prepare(
+        "UPDATE event_ordering 
+         SET position = position - 1 
+         WHERE month = :month AND day = :day AND position > :pos"
+    );
+
+    // Delete lost days and shift
+    foreach ($existing as $ord) {
+        $mm_dd = $ord['month'] . '-' . $ord['day'];
+        $existingDays[$mm_dd] = true;
+        
+        if (!isset($coveredDays[$mm_dd])) {
+            $stmtDel->execute([
+                ':event_id' => $eventId, 
+                ':month' => $ord['month'], 
+                ':day' => $ord['day']
+            ]);
+            
+            // Close the gap so positions remain strictly sequential (1, 2, 3...)
+            $stmtShift->execute([
+                ':month' => $ord['month'], 
+                ':day' => $ord['day'], 
+                ':pos' => $ord['position']
+            ]);
+        }
+    }
+
+    // Insert new required days
+    $stmtGetMax = $pdo->prepare(
+        "SELECT COALESCE(MAX(position), 0) + 1 
+         FROM event_ordering 
+         WHERE month = :month AND day = :day"
+    );
+    $stmtInsertOrd = $pdo->prepare(
+        "INSERT INTO event_ordering (ordering_id, event_id, month, day, position) 
+         VALUES (:ord_id, :event_id, :month, :day, :position)"
+    );
+    
+    foreach ($coveredDays as $mm_dd => $data) {
+        if (!isset($existingDays[$mm_dd])) {
+            $stmtGetMax->execute([':month' => $data['month'], ':day' => $data['day']]);
+            $newPos = $stmtGetMax->fetchColumn();
+            
+            $stmtInsertOrd->execute([
+                ':ord_id' => $pdo->query("SELECT UUID()")->fetchColumn(),
+                ':event_id' => $eventId,
+                ':month' => $data['month'],
+                ':day' => $data['day'],
+                ':position' => $newPos
+            ]);
+        }
+    }
 }
 
 ?>

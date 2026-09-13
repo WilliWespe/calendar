@@ -37,7 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     $action = $_POST['action'];
     
     // Define a whitelist of allowed actions for security
-    $allowedActions = ['addEvent', 'addEventType', 'getAllCalendarData', 'deleteEvent', 'editEvent', 'changeEventPosition'];
+    $allowedActions = [
+        'addEvent',
+        'editEvent', 
+        'deleteEvent', 
+        'addDateToEvent',
+        'editEventDateRange', 
+        'deleteEventDateRange',
+        'changeEventPosition', 
+        'addEventType', 
+        'getAllCalendarData'
+    ];
 
     if (in_array($action, $allowedActions) && is_callable($action)) {
         try {

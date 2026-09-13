@@ -36,9 +36,13 @@ require_once __DIR__ . '/php/translate.php';
     <button onclick="addEvent()">Add event</button>
     <button onclick="storeCalendarDataInRAM()">Fetch Data</button>
     <button onclick="addEventType('birthday', 'ffcc02')">Add event type</button>
-    <button onclick="deleteEvent('6f70fa2e-ad45-11f1-834f-4c796e9137c8')">Delete event</button>
-    <button onclick="editEvent('8951bc98-ad47-11f1-834f-4c796e9137c8', 'Test', '4abb804e-ad44-11f1-834f-4c796e9137c8', eventDotColor = null, includeEventInMail = 1)">Edit Event</button>
-    <button onclick="changeEventPosition('895cbbff-ad47-11f1-834f-4c796e9137c8', 10, 12, 1)">Change order</button>
+    <button onclick="deleteEvent('216a40d5-af7a-11f1-b3a4-4c796e9137c8')">Delete event</button>
+    <button onclick="editEvent('2175253f-af7a-11f1-b3a4-4c796e9137c8', 'Test', '37940a20-ad44-11f1-834f-4c796e9137c8', eventDotColor = 'ffffff', includeEventInMail = 0)">Edit Event</button>
+    <button onclick="changeEventPosition('9528971e-af7a-11f1-b3a4-4c796e9137c8', 10, 12, -1)">Change order</button>
+    <button onclick="addDateRangeToEvent('951f61d3-af7a-11f1-b3a4-4c796e9137c8', '2026-10-03', '2026-10-13')">Add Date Range to Existing Event</button>
+    <button onclick="editEventDateRange('952adbda-af7a-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8', '2026-10-07', '2026-10-07')">Edit Range</button>
+    <button onclick="deleteEventDateRange('b278fb20-af7d-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8')">Delete Range</button>
+
     <?php
         // Display custom footer elements 
         if (file_exists(__DIR__ . '/footer.php')) {

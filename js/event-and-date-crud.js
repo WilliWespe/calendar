@@ -155,6 +155,96 @@ async function editEvent(eventId, eventDescription, eventType, eventDotColor = n
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
+ * Adds a new date range to an existing event and triggers server-side reconciliation.
+ * 
+ * @param {string} eventId - The UUID of the existing event.
+ * @param {string} startDate - The start date (YYYY-MM-DD format).
+ * @param {string|null} [endDate=null] - The end date (YYYY-MM-DD format). Leave null for a single day.
+ * @returns {Promise<void>}
+ */
+async function addDateRangeToEvent(eventId, startDate, endDate = null) {
+    let payload = {
+        action: "addDateToEvent", // Maps to the existing PHP function name
+        eventId: eventId,
+        startDate: startDate,
+        endDate: endDate
+    };
+
+    try {
+        await $.ajax({ 
+            url: 'php/routing.php', 
+            type: 'POST', 
+            data: payload 
+        });
+        console.log("Date range successfully added and reconciled.");
+    } catch (xhr) {
+        console.error("Failed to add date range:", xhr.status, xhr.responseText);
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
+ * Edits an existing date range for an event and triggers server-side reconciliation.
+ * 
+ * @param {string} rangeId - The UUID of the specific date range to modify.
+ * @param {string} eventId - The UUID of the parent event.
+ * @param {string} startDate - The new start date (YYYY-MM-DD format).
+ * @param {string} endDate - The new end date (YYYY-MM-DD format).
+ * @returns {Promise<void>}
+ */
+async function editEventDateRange(rangeId, eventId, startDate, endDate) {
+    let payload = {
+        action: "editEventDateRange",
+        rangeId: rangeId,
+        eventId: eventId,
+        startDate: startDate,
+        endDate: endDate
+    };
+
+    try {
+        await $.ajax({ 
+            url: 'php/routing.php', 
+            type: 'POST', 
+            data: payload 
+        });
+        console.log("Date range successfully edited and reconciled.");
+    } catch (xhr) {
+        console.error("Failed to edit date range:", xhr.status, xhr.responseText);
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
+ * Deletes a specific date range from an event and cleans up orphaned orderings.
+ * 
+ * @param {string} rangeId - The UUID of the date range to delete.
+ * @param {string} eventId - The UUID of the parent event.
+ * @returns {Promise<void>}
+ */
+async function deleteEventDateRange(rangeId, eventId) {
+    let payload = {
+        action: "deleteEventDateRange",
+        rangeId: rangeId,
+        eventId: eventId
+    };
+
+    try {
+        await $.ajax({ 
+            url: 'php/routing.php', 
+            type: 'POST', 
+            data: payload 
+        });
+        console.log("Date range successfully deleted and orderings cleaned.");
+    } catch (xhr) {
+        console.error("Failed to delete date range:", xhr.status, xhr.responseText);
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
  * Adds a new event type to the database, optionally with a background color.
  * 
  * @param {string} eventType - The name of the new event type.
