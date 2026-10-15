@@ -35,7 +35,7 @@ require_once __DIR__ . '/php/translate.php';
 <body>
     <button onclick="addEvent()">Add event</button>
     <button onclick="storeCalendarDataInRAM()">Fetch Data</button>
-    <button onclick="addEventType('birthday', 'ffcc02')">Add event type</button>
+    <button onclick="addEventType('frei', 'e6a321')">Add event type</button>
     <button onclick="deleteEvent('216a40d5-af7a-11f1-b3a4-4c796e9137c8')">Delete event</button>
     <button onclick="editEvent('2175253f-af7a-11f1-b3a4-4c796e9137c8', 'Test', '37940a20-ad44-11f1-834f-4c796e9137c8', eventDotColor = 'ffffff', includeEventInMail = 0)">Edit Event</button>
     <button onclick="changeEventPosition('9528971e-af7a-11f1-b3a4-4c796e9137c8', 10, 12, -1)">Change order</button>

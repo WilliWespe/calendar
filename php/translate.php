@@ -16,13 +16,24 @@ function translate($word): string{
         "calendar" => [
             "de" => "Kalender"
         ],
+        "stuff" => [
+            "de" => "sonstiges"
+        ],
+        "free" => [
+            "de" => "frei"
+        ],
+        "birthday" => [
+            "de" => "Geburtstag"
+        ],
     ];
 
-    if($language == "en"){
+    $translated_word = $dictionary[$word][$language];
+
+    if($language == "en" || $translated_word == ""){
         return $word;
     }
    
-    return $dictionary[$word][$language];
+    return $translated_word;
 }
 
 ?>
