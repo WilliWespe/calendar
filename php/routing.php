@@ -1,16 +1,53 @@
 <?php
 
+// Start the session at the very top to access $_SESSION
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'get-db-connection.php';
 require_once 'event-and-date-crud.php';
-require_once 'crypt.php'; 
+require_once 'crypt.php';
 
-// Ensure it's a POST request and an action exists
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+/**
+ * Main AJAX Router for Calendar Operations.
+ * 
+ * This script intercepts incoming POST requests and acts as a front controller.
+ * It reads the requested 'action' from the POST payload, validates it against 
+ * a strict whitelist of permitted functions, and executes the target function 
+ * dynamically if it exists. It handles formatting the response (JSON for arrays, 
+ * plain text for strings) and catches all exceptions to return a unified 400 Bad Request
+ * HTTP status code alongside the error message.
+ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
+
+    // --- CSRF VALIDATION ---
+    $clientToken = $_POST['csrf_token'] ?? '';
+    $serverToken = $_SESSION['csrf_token'] ?? '';
+    
+    if (empty($clientToken) || !hash_equals($serverToken, $clientToken)) {
+        http_response_code(403); // 403 Forbidden
+        echo "CSRF token validation failed.";
+        exit;
+    }
+    // -----------------------
     
     $action = $_POST['action'];
     
     // Define a whitelist of allowed actions for security
-    $allowedActions = ['addEvent', 'addEventType', 'getAllCalendarData', 'deleteEvent', 'editEvent', 'changeEventPosition'];
+    $allowedActions = [
+        'addEvent',
+        'editEvent', 
+        'deleteEvent', 
+        'addDateToEvent',
+        'editEventDateRange', 
+        'deleteEventDateRange',
+        'changeEventPosition', 
+        'addEventType', 
+        'getAllCalendarData'
+    ];
 
     if (in_array($action, $allowedActions) && is_callable($action)) {
         try {
@@ -26,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
                 echo $result;
             }
             
-        // 2. Catch 'Throwable' instead of 'Exception' to catch ALL fatal errors
+        // Catch 'Throwable' instead of 'Exception' to catch ALL fatal errors
         } catch (Throwable $e) { 
             // Set the HTTP response code to 400 (Bad Request) so jQuery triggers the 'catch' block
             http_response_code(400);

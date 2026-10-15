@@ -1,16 +1,32 @@
 <?php
 
+/**
+ * Loads and caches the application configuration from the app.config INI file.
+ * 
+ * Uses a static variable to ensure the file system is only accessed once 
+ * per request lifecycle, preventing redundant disk reads on subsequent calls.
+ *
+ * @return array A multidimensional array containing the parsed configuration settings.
+ * @throws RuntimeException If the app.config file does not exist at the expected path.
+ */
 function getConfig(): array {
     static $config = null;
+    
     if ($config === null) {
         $configFile = __DIR__ . '/../app.config';
+        
         if (!file_exists($configFile)) {
             throw new RuntimeException("Configuration file missing: {$configFile}");
         }
-        $config = parse_ini_file($configFile, true); // true parses sections into multidimensional arrays
+        
+        // The 'true' parameter ensures INI sections are parsed into nested arrays
+        $config = parse_ini_file($configFile, true); 
     }
+    
     return $config;
 }
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
  * Custom function to parse and load a .env file into environment variables during developement. Can 
@@ -49,6 +65,19 @@ function loadEnv(string $filePath): void {
             }
         }
     }
+}
+
+/**
+ * Generates and retrieves a CSRF token for the current session.
+ */
+function getCsrfToken(): string {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
 }
 
 ?>

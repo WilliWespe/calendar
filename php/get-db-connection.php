@@ -1,5 +1,5 @@
 <?php
-// Get PDO connection
+// Get PDO (PHP Data Objects) connection
 function getPDO(): PDO {
     static $pdo = null;
     if ($pdo === null) {
@@ -8,6 +8,7 @@ function getPDO(): PDO {
         $user = getenv('DB_USER') ?: 'root';
         $pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
 
+        // Data Source Name
         $dsn = "mysql:host={$host};dbname={$db};charset=utf8mb4";
 
         $pdo = new PDO(
