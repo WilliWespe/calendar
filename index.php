@@ -22,19 +22,27 @@ require_once __DIR__ . '/php/translate.php';
     <link href="css/style.css" rel="stylesheet">
     <link href="googleFonts/fonts.css" rel="stylesheet">
     <script src="js/jquery.js"></script>
+    <script src="js/Calendar.js"></script>
+    <script src="js/Month.js"></script>
+    <script src="js/Day.js"></script>
+    <script src="js/Event.js"></script>
     <script src="js/event-and-date-crud.js"></script>
+    <script src="js/global-variables-and-parameters.js"></script>
 </head>
 
 <script>
 
 	$(document).ready(function(){
+
+        createTableAndObjects();
+
 	});
 
 </script>
 
 <body>
     <button onclick="addEvent()">Add event</button>
-    <button onclick="storeCalendarDataInRAM()">Fetch Data</button>
+    <button onclick="preProcessCalendarData()">Fetch Data</button>
     <button onclick="addEventType('frei', 'e6a321')">Add event type</button>
     <button onclick="deleteEvent('216a40d5-af7a-11f1-b3a4-4c796e9137c8')">Delete event</button>
     <button onclick="editEvent('2175253f-af7a-11f1-b3a4-4c796e9137c8', 'Test', '37940a20-ad44-11f1-834f-4c796e9137c8', eventDotColor = 'ffffff', includeEventInMail = 0)">Edit Event</button>
@@ -42,6 +50,8 @@ require_once __DIR__ . '/php/translate.php';
     <button onclick="addDateRangeToEvent('951f61d3-af7a-11f1-b3a4-4c796e9137c8', '2026-10-03', '2026-10-13')">Add Date Range to Existing Event</button>
     <button onclick="editEventDateRange('952adbda-af7a-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8', '2026-10-07', '2026-10-07')">Edit Range</button>
     <button onclick="deleteEventDateRange('b278fb20-af7d-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8')">Delete Range</button>
+
+    <div id="calendar-container"></div>
 
     <?php
         // Display custom footer elements 

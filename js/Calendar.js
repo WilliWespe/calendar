@@ -1,0 +1,120 @@
+class Calendar{
+
+    constructor(){
+        this.eventTypes = new Map();
+        this.events = new Map();
+        this.months = new Map();
+        this.days = new Map();
+        this.cells = new Map();
+
+        this.raw_db_data = [];
+
+        this.calendar_db_data_events = [];
+        this.calendar_db_data_event_date_ranges = [];
+        this.calendar_db_data_orderings = [];
+        this.calendar_db_data_event_types = [];
+        this.calendar_db_data_events_by_date = new Map();
+        this.calendar_db_data_orderings_by_mm_dd = new Map();
+
+        this.loadDatabaseData();
+
+        this.createEventTypeObjects();
+    }
+
+    loadDatabaseData(){
+        this.db_data = preProcessDatabaseData();
+
+        this.db_data_events = this.db_data[0];
+        this.db_data_event_date_ranges = this.db_data[1];
+        this.db_data_orderings = this.db_data[2];
+        this.db_data_event_types = this.db_data[3];
+        this.db_data_events_by_date = this.db_data[4];
+        this.db_data_orderings_by_mm_dd = this.db_data[5];
+    }
+
+    createCalendarStructure(){
+        for(var monthIndex=0; monthIndex<arrMonths.length; monthIndex++){                                                                                        // Loop through all months (0-11)
+
+            var month = new Month();
+            month.setID(monthIndex);
+
+            this.addMonth(month);
+
+            for(var cellNumber=0; cellNumber<32; cellNumber++){                                                                                    // Loop through all cells of a month (31 days + header)
+
+                // Create new cell, if cellNumber == 0 (most upper cell), add month name from array
+
+                var isHeader = (cellNumber==0);
+                var cell = new Cell(isHeader);
+                cell.setID(monthIndex+'-'+cellNumber)
+
+                month.addCell(cell);
+                this.addCell(cell);
+            }
+        }
+ 
+        createDayObjects();                                                                                           // Go through all cells, and add the date and weekday
+    }
+
+    createDayObjects(){
+
+        var daysIntoTheFuture = 0;                                                                                                                                                   
+
+        for(var dayNumber=0; dayNumber<365; dayNumber++){                                                               // Loop through a whole year (leapyear exception see below)                                                                                                 
+
+            var rollingDate = new Date();                                                                               
+            rollingDate.setDate(rollingDate.getDate()+daysIntoTheFuture);      
+            
+            var rollingDateDay = rollingDate.getDate();                                                                 
+            var rollingDateMonth = rollingDate.getMonth();
+            var rollingDateYear = rollingDate.getFullYear(); 
+
+            var day = Day(rollingDate)
+            var cell = this.getCell(day.getID());
+        
+            cell.addDay(day);     
+            this.addDay(day);
+            this.getMonth(rollingDateMonth).addDay(day)
+
+            if(rollingDateYear == nextYear){                                                                            // If the loop got into next year
+                cell.setAdditionalInformation("nextYear", true);                                                                             // Add this class to the cell, to indicate that it's next year
+            }
+
+            if(rollingDateMonth == 1 && rollingDateDay == 29){                                                          // If there is a 29th Feb in this calendar, decrease dayNumber by one, so the loop iterates 366 times
+                dayNumber--;
+            }
+
+            daysInFuture++;                                                                                             // Increase days in the future
+        }
+    }  
+    
+    createEventTypeObjects(){
+        for(let eventTypeItem of calendar_db_data_EVENT_TYPES){
+
+            let id = eventTypeItem["event_type_id"];
+            let type = eventTypeItem["event_type"];
+            let backgroundColor = eventTypeItem["event_type_background_color"];
+
+            let eventTypeObject = new EventType(id, type, backgroundColor);
+
+            this.eventTypes.set(id, eventTypeObject);
+        }
+    }
+    
+    addCell(cell){
+        this.cells.set(cell.getID(), cell);
+    }
+
+    addDay(day){
+        this.days.set(day.getID(), day);
+    }
+
+    addMonth(month){
+        this.months.set(month.getID(), month);
+    }
+
+    getCell(cellID){
+        this.cells.get(cellID);
+    }
+}
+

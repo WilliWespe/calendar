@@ -1152,7 +1152,7 @@ async function changeEventPosition(eventId, month, day, change) {
  * 
  * @returns {Promise<{events: Array, eventDateRanges: Array, orderings: Array, eventTypes: Array}>} 
  */
-async function fetchCalendarData() {
+async function fetchDataFromDatabase() {
     let payload = {
         action: "getAllCalendarData"
     };
@@ -1174,7 +1174,7 @@ async function fetchCalendarData() {
         console.error("Server returned an error:", xhr.status, xhr.responseText);
         
         // Return empty arrays to prevent destructuring crashes on failure
-        return { events: [], eventDateRanges: [], orderings: [] };
+        return { events: [], eventDateRanges: [], orderings: [], eventTypes: [] };
     }
 }
 
@@ -1186,9 +1186,9 @@ async function fetchCalendarData() {
  * 
  * @returns {Promise<void>}
  */
-async function storeCalendarDataInRAM(){
+async function preProcessDatabaseData(){
     // After fetching all data:
-    const { events, eventDateRanges, orderings, eventTypes } = await fetchCalendarData();
+    const { events, eventDateRanges, orderings, eventTypes } = await fetchDataFromDatabase();
 
     // Pre-process for O(1) lookups:
     const eventsByDate = new Map();  // date (YYYY-MM-DD) → events[]
@@ -1235,6 +1235,8 @@ async function storeCalendarDataInRAM(){
     console.log("Orderings by MM_DD:")
     console.log(orderingsByMM_DD);
     console.log("----------------------------------------------")
+
+    return [events, eventDateRanges, orderings, eventTypes, eventsByDate, orderingsByMM_DD];
 }
 
 /*

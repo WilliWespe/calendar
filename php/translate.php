@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Translate an english word into the langauge defined in app.config by the user
+ * Translate an english text into the language defined in app.config by the user
  * Only works if the target language and the translation exist in the dictionary
  * 
- * @param string $word The english word
- * @return string The translated word
+ * @param string $text The english text
+ * @return string The translated text
  */
-function translate($word): string{
+function translate($text): string{
 
     $config = getConfig();
     $language = $config['user']['language'];
@@ -27,13 +27,13 @@ function translate($word): string{
         ],
     ];
 
-    $translated_word = $dictionary[$word][$language];
+    $translated_text = $dictionary[$text][$language];
 
-    if($language == "en" || $translated_word == ""){
-        return $word;
+    if($language == "en" || $translated_text == ""){
+        return $text;
     }
    
-    return $translated_word;
+    return $translated_text;
 }
 
 ?>

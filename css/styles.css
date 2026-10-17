@@ -1,0 +1,314 @@
+:root {
+	--frei: #e4ff00;
+	--geburtstag: orange;
+	--sonstigesEinzel: red;
+	--sonstigesMehrfach: blue;
+	--neuesJahr: black;
+	--monat: #cccccc;
+
+	--splitNumber: 12;
+}
+
+/* globale Styles */
+html, body{
+	font-family: 'Gothic A1';
+	margin-bottom:20px;
+	height:100vh;
+	overflow:hidden;
+}
+
+	#calendar-container{
+		width:100%;
+		height:98vh;
+		overflow:auto;
+		border-left:solid 1px;
+	}
+
+	.month-column{
+		position:relative;
+		width: calc(100% / var(--splitNumber));
+		margin:-1px 0 0 -1px;
+		float:left;
+		border:solid 1px;
+		box-sizing: border-box;
+		z-index:2;
+	}
+
+		.smallCell{
+			width:100%;
+			height:calc(100vh / 22);
+			min-height:43px;
+			border-bottom:solid 1px;
+		}
+
+			.monthCell{
+				position:sticky;
+				top:0;
+				line-height:max(calc(100vh / 22), 43px);
+				font-size:20px;
+				text-align:center;
+				font-weight:bold;
+				background:var(--monat);
+				border-top:solid 1px;
+				z-index:1;
+			}
+			
+			.dayCell{
+				position: relative;
+				font-size:15px;
+			}
+
+				.dayCell div{
+					position: relative;
+					width:45%;
+					top: 50%;
+					margin: 0;
+					padding-left:5px;
+					float:left;
+					transform: translateY(-50%);
+				}
+
+				.dayCell div:nth-child(2){
+					height:100%;
+					width:25%;
+					line-height:150%;
+					font-size:30px;
+					text-align:center;
+				}
+
+				.neuesJahr div:nth-child(2){
+					border-left:solid var(--neuesJahr) 2px;
+				}
+
+			.noBottomBorder{
+				border-bottom:none;
+			}
+
+	#messageBox{
+		position:fixed;
+		width:70vw;
+		height:50vh;
+		border:solid black;
+		background:white;
+		font-size:25px;
+		z-index:10;
+	}
+
+		#messageHeader{
+			position:relative;
+			background:white;
+			border-bottom:solid;
+			height:30px;
+			z-index:9;
+		}
+
+			#date{
+				padding-left:2.5%;
+				float:left;
+			}
+
+			#messageClose{
+				width:5%;
+				margin-top:-2.5px;
+				float:right;
+				color:black;
+				font-weight:bold;
+				cursor:pointer;
+			}
+		
+		#messageContentBox{
+			position:absolute;
+			width:100%;
+			height:calc(100% - 30px);
+			top:30px;
+			right:0;
+			padding-top:2%;
+			overflow:auto;
+			box-sizing:border-box;
+			z-index:8;
+		}
+
+			/* width */
+			#messageContentBox::-webkit-scrollbar {
+				width: 5px;
+			}
+		
+			#messageContentBox::-webkit-scrollbar-button{
+				height:0;
+			}
+		
+			/* Track */
+			#messageContentBox::-webkit-scrollbar-track {
+				background: transparent; 
+			}
+		
+			/* Handle */
+			#messageContentBox::-webkit-scrollbar-thumb {
+				background: black; 
+			}
+
+				.textareaContainer, .buttonContainer{
+					margin-left:5%;
+				}
+
+				#messageContentBox img{
+					height:45px;
+					border-radius:10%;
+					cursor:pointer;
+				}
+
+					.save{
+						background:#5cff6b;
+					}
+
+					.delete{
+						background:#ff4545;
+					}
+
+					.add{
+						background:#65c8ff;
+					}
+
+					.notify{
+						background:#e4ff00;
+					}
+
+					#messageContentBox input{
+						position:relative;
+						width:46px;
+						height:46px;
+					}
+
+					#messageContentBox input[type=color]{
+						top:-5px;
+					}
+
+			#messageContentBox textarea{
+				height:40px;
+			}
+
+			#messageContent{
+				position: relative;
+			}
+
+	br{
+		clear:both;
+	}
+		
+	#footer{
+		position:fixed;
+		left:0;
+		bottom:0;
+		font-size:12px;
+		text-align:left;
+		z-index:5;
+		background:white;
+	}
+
+/*---------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+@media screen and (max-width: 1300px){
+	:root {
+		--splitNumber: 6;
+	}
+}
+@media screen and (max-width: 800px){
+	:root {
+		--splitNumber: 4;
+	}
+}
+@media screen and (max-width: 500px){
+	:root {
+		--splitNumber: 3;
+	}
+}
+@media only screen and (max-device-width: 1000px){
+	:root {
+		--splitNumber: 1;
+	}
+
+	body{
+		margin:0;
+	}
+
+		.month-column{
+			width:100vw;
+		}
+
+			.smallCell{
+				height:calc(100vh / 11);
+			}
+
+				.monthCell{
+					line-height:max(calc(100vh / 11), 43px);
+					font-size:50px;
+				}
+				
+				.dayCell{
+					font-size:45px;
+				}
+					.dayCell div:nth-child(2){
+						line-height:200%;
+						font-size:100px;
+					}
+
+					.neuesJahr div:nth-child(2){
+						border-left:solid var(--neuesJahr) 5px;
+					}
+
+					.sonstigesLine{
+						border-right:solid var(--sonstigesMehrfach) 10px;
+					}
+
+			#messageBox{
+				width:90vw;
+				height:50vh;
+				font-size:55px;
+			}
+
+				#messageHeader{
+					height:60px;
+				}
+
+					#date{
+						padding-left:2.5%;
+					}
+
+					#messageClose{
+						width:10%;
+						margin-top:-5px;
+					}
+				
+				#messageContentBox{
+					width:100%;
+					height:calc(100% - 60px);
+					top:60px;
+					right:0;
+					padding-top:2%;
+				}
+
+					/* width */
+					#messageContentBox::-webkit-scrollbar {
+						width: 5px;
+					}
+
+					#messageContentBox img{
+						height:70px;
+					}
+
+					#messageContentBox input{
+						width:70px;
+						height:70px;
+						top:-5px;
+					}
+
+					#messageContentBox textarea{
+						height:70px;
+						font-size:40px;
+						border:solid 1px;
+					}
+}
+
+#messageContentBox input[type=checkbox]{
+	accent-color: blue;
+}
