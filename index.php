@@ -34,7 +34,9 @@ require_once __DIR__ . '/php/translate.php';
 
 	$(document).ready(function(){
 
-        createTableAndObjects();
+        var calendar = new Calendar();
+        calendar.createCalendarStructure();
+        calendar.render();
 
 	});
 

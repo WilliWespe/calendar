@@ -1,4 +1,4 @@
-class Calendar{
+class Calendar extends SharedUtilities{
 
     constructor(){
         this.eventTypes = new Map();
@@ -9,16 +9,24 @@ class Calendar{
 
         this.raw_db_data = [];
 
-        this.calendar_db_data_events = [];
-        this.calendar_db_data_event_date_ranges = [];
-        this.calendar_db_data_orderings = [];
-        this.calendar_db_data_event_types = [];
-        this.calendar_db_data_events_by_date = new Map();
-        this.calendar_db_data_orderings_by_mm_dd = new Map();
+        this.db_data_events = [];
+        this.db_data_event_date_ranges = [];
+        this.db_data_orderings = [];
+        this.db_data_event_types = [];
+        this.db_data_events_by_date = new Map();
+        this.db_data_orderings_by_mm_dd = new Map();
 
         this.loadDatabaseData();
 
         this.createEventTypeObjects();
+        this.createEventObjects();
+        this.linkDataRangesToEvents();
+        this.createCalendarStructure();
+        this.createDayObjects();
+        this.populateDaysWithEvents();
+        this.applyOrderingToEventsPerDay();
+
+        this.render();
     }
 
     loadDatabaseData(){
@@ -53,7 +61,7 @@ class Calendar{
             }
         }
  
-        createDayObjects();                                                                                           // Go through all cells, and add the date and weekday
+        this.createDayObjects();                                                                                           // Go through all cells, and add the date and weekday
     }
 
     createDayObjects(){
@@ -99,6 +107,53 @@ class Calendar{
 
             this.eventTypes.set(id, eventTypeObject);
         }
+    }
+    
+    createEventObjects(){
+        for(let eventItem of this.db_data_events){
+
+            let id = eventItem["event_id"];
+            let = description = eventItem["event_description"];
+            let = eventTypeObject = this.eventTypes.get(eventItem["event_type"]);
+            let = dotColor = eventItem["event_dot_color"];
+            let = includeEventInMail = eventItem["include_event_in_mail"];
+
+            let eventObject = new Event(id, description, eventTypeObject, dotColor, includeEventInMail);
+
+            this.events.set(id, eventObject);
+        }
+    }
+
+    linkDataRangesToEvents(){
+        for(let dateRangeItem of this.db_data_event_date_ranges){
+
+            let id = dateRangeItem["range_id"];
+            let = startDate = dateRangeItem["start_date"];
+            let = endDate = dateRangeItem["end_date"];
+            let = eventObject = this.events.get(dateRangeItem["event_id"]);
+
+            let dateRangeObject = new DateRange(id, startDate, endDate)
+
+            eventObject.addDateRange(id, dateRangeObject);
+        }
+    }
+
+    populateDaysWithEvents(){
+        for(let eventObject of this.events){
+            let allDatesOfEvent = eventObject.getAllDates();
+
+            for(let date of allDatesOfEvent){
+
+                let dayObject = this.days.get(SharedUtilities.constructDayID(date));
+                if(dayObject != null){
+                    dayObject.addEvent(eventObject);
+                }
+            }
+        }
+    }
+
+    render(){
+        // todo
     }
     
     addCell(cell){
