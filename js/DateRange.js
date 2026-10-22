@@ -6,4 +6,12 @@ class DateRange{
         this.endDate = new Date(endDate);
     }
 
+    getStartDate(){
+        return this.startDate;
+    }
+
+    getEndDate(){
+        return this.endDate;
+    }
+
 }

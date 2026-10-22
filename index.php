@@ -22,9 +22,13 @@ require_once __DIR__ . '/php/translate.php';
     <link href="css/style.css" rel="stylesheet">
     <link href="googleFonts/fonts.css" rel="stylesheet">
     <script src="js/jquery.js"></script>
+    <script src="js/SharedUtilities.js"></script>
     <script src="js/Calendar.js"></script>
+    <script src="js/EventType.js"></script>
+    <script src="js/DateRange.js"></script>
     <script src="js/Month.js"></script>
     <script src="js/Day.js"></script>
+    <script src="js/Cell.js"></script>
     <script src="js/Event.js"></script>
     <script src="js/event-and-date-crud.js"></script>
     <script src="js/global-variables-and-parameters.js"></script>
@@ -35,8 +39,6 @@ require_once __DIR__ . '/php/translate.php';
 	$(document).ready(function(){
 
         var calendar = new Calendar();
-        calendar.createCalendarStructure();
-        calendar.render();
 
 	});
 

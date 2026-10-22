@@ -1,6 +1,7 @@
 class Calendar extends SharedUtilities{
 
     constructor(){
+        super();
         this.eventTypes = new Map();
         this.events = new Map();
         this.months = new Map();
@@ -16,11 +17,16 @@ class Calendar extends SharedUtilities{
         this.db_data_events_by_date = new Map();
         this.db_data_orderings_by_mm_dd = new Map();
 
-        this.loadDatabaseData();
+        this.pipeline();
+    }
+
+    async pipeline(){
+
+        await this.loadDatabaseData();
 
         this.createEventTypeObjects();
         this.createEventObjects();
-        this.linkDataRangesToEvents();
+        this.linkDateRangesToEvents();
         this.createCalendarStructure();
         this.createDayObjects();
         this.populateDaysWithEvents();
@@ -29,8 +35,8 @@ class Calendar extends SharedUtilities{
         this.render();
     }
 
-    loadDatabaseData(){
-        this.db_data = preProcessDatabaseData();
+    async loadDatabaseData(){
+        this.db_data = await preProcessDatabaseData();
 
         this.db_data_events = this.db_data[0];
         this.db_data_event_date_ranges = this.db_data[1];
@@ -54,7 +60,7 @@ class Calendar extends SharedUtilities{
 
                 var isHeader = (cellNumber==0);
                 var cell = new Cell(isHeader);
-                cell.setID(monthIndex+'-'+cellNumber)
+                cell.setID(monthIndex+'-'+cellNumber);
 
                 month.addCell(cell);
                 this.addCell(cell);
@@ -77,12 +83,12 @@ class Calendar extends SharedUtilities{
             var rollingDateMonth = rollingDate.getMonth();
             var rollingDateYear = rollingDate.getFullYear(); 
 
-            var day = Day(rollingDate)
+            var day = new Day(rollingDate);
             var cell = this.getCell(day.getID());
         
-            cell.addDay(day);     
+            cell.setDay(day);     
             this.addDay(day);
-            this.getMonth(rollingDateMonth).addDay(day)
+            this.months.get(rollingDateMonth).addDay(day)
 
             if(rollingDateYear == nextYear){                                                                            // If the loop got into next year
                 cell.setAdditionalInformation("nextYear", true);                                                                             // Add this class to the cell, to indicate that it's next year
@@ -92,12 +98,12 @@ class Calendar extends SharedUtilities{
                 dayNumber--;
             }
 
-            daysInFuture++;                                                                                             // Increase days in the future
+            daysIntoTheFuture++;                                                                                             // Increase days in the future
         }
     }  
     
     createEventTypeObjects(){
-        for(let eventTypeItem of calendar_db_data_EVENT_TYPES){
+        for(let eventTypeItem of this.db_data_event_types){
 
             let id = eventTypeItem["event_type_id"];
             let type = eventTypeItem["event_type"];
@@ -113,10 +119,10 @@ class Calendar extends SharedUtilities{
         for(let eventItem of this.db_data_events){
 
             let id = eventItem["event_id"];
-            let = description = eventItem["event_description"];
-            let = eventTypeObject = this.eventTypes.get(eventItem["event_type"]);
-            let = dotColor = eventItem["event_dot_color"];
-            let = includeEventInMail = eventItem["include_event_in_mail"];
+            let description = eventItem["event_description"];
+            let eventTypeObject = this.eventTypes.get(eventItem["event_type"]);
+            let dotColor = eventItem["event_dot_color"];
+            let includeEventInMail = eventItem["include_event_in_mail"];
 
             let eventObject = new Event(id, description, eventTypeObject, dotColor, includeEventInMail);
 
@@ -124,13 +130,13 @@ class Calendar extends SharedUtilities{
         }
     }
 
-    linkDataRangesToEvents(){
+    linkDateRangesToEvents(){
         for(let dateRangeItem of this.db_data_event_date_ranges){
 
             let id = dateRangeItem["range_id"];
-            let = startDate = dateRangeItem["start_date"];
-            let = endDate = dateRangeItem["end_date"];
-            let = eventObject = this.events.get(dateRangeItem["event_id"]);
+            let startDate = dateRangeItem["start_date"];
+            let endDate = dateRangeItem["end_date"];
+            let eventObject = this.events.get(dateRangeItem["event_id"]);
 
             let dateRangeObject = new DateRange(id, startDate, endDate)
 
@@ -139,21 +145,42 @@ class Calendar extends SharedUtilities{
     }
 
     populateDaysWithEvents(){
-        for(let eventObject of this.events){
+        for(let eventObject of this.events.values()){
             let allDatesOfEvent = eventObject.getAllDates();
 
-            for(let date of allDatesOfEvent){
+            for(let date of allDatesOfEvent.values()){
 
-                let dayObject = this.days.get(SharedUtilities.constructDayID(date));
+                let dayObject = this.days.get(this.constructDayID(date));
                 if(dayObject != null){
-                    dayObject.addEvent(eventObject);
+                    dayObject.addEvent(eventObject.getID(), eventObject);
+                }
+            }
+        }
+    }
+
+    applyOrderingToEventsPerDay(){
+
+        for(let [MMDD, eventIDsAndPosition] of this.db_data_orderings_by_mm_dd){
+
+            for(let [eventID, position] of Object.entries(eventIDsAndPosition)){
+
+                let dayObject = this.getDayByMMDD(MMDD);
+                if(dayObject != null){
+                    dayObject.setEventPosition(eventID, position);
                 }
             }
         }
     }
 
     render(){
-        // todo
+        for(let dayObject of this.days.values()){
+            console.log("---------------------------");
+            console.log(dayObject.getID());
+            for(let eventObject of dayObject.events.values()){
+                console.log(eventObject.description);
+            }
+            console.log("---------------------------");
+        }
     }
     
     addCell(cell){
@@ -169,7 +196,13 @@ class Calendar extends SharedUtilities{
     }
 
     getCell(cellID){
-        this.cells.get(cellID);
+        return this.cells.get(cellID);
+    }
+
+    getDayByMMDD(MMDD){
+        let [MM, DD] = MMDD.split('-').map(Number);
+        let month = this.months.get(MM - 1);      // Month IDs are 0-based
+        return month ? month.days.get(DD) : undefined;
     }
 }
 

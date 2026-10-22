@@ -9,11 +9,29 @@ class Event{
         this.dateRanges = new Map();
     }
 
+    getID(){
+        return this.id;
+    }
+
     addDateRange(id, dateRangeObject){
         this.dateRanges.set(id, dateRangeObject);
     }
 
     getAllDates(){
-        // todo
+        let allDates = new Set();
+        for (let [dateRangeID, dateRangeObject] of this.dateRanges) {
+
+            let startDate = dateRangeObject.getStartDate();
+            let endDate = dateRangeObject.getEndDate();
+
+            // todo for loop between both dates
+
+            allDates.add(startDate);
+            allDates.add(endDate);
+
+
+        }
+
+        return allDates;
     }
 }

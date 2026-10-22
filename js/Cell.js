@@ -4,13 +4,12 @@ class Cell {
         
         if(isHeader){
             this.type = "header";
-            this.day = null;
         }
         else{
             this.type = "dayCell";
-            this.day = new Day();
         }
 
+        this.day = null;
         this.id = new String();
         this.additionalInformation = new Map();
     }

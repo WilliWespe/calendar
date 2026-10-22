@@ -15,10 +15,10 @@ class Month{
     }
 
     addCell(cell){
-        this.cells.set(cell.getId(), cell);
+        this.cells.set(cell.getID(), cell);
     }
 
     addDay(day){
-        this.days.set(day.getId(), day);
+        this.days.set(day.getID(), day);
     }
 }
