@@ -7,6 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once 'get-db-connection.php';
 require_once 'event-and-date-crud.php';
+require_once 'helper-functions.php';
 require_once 'crypt.php';
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -46,7 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
         'deleteEventDateRange',
         'changeEventPosition', 
         'addEventType', 
-        'getAllCalendarData'
+        'getAllCalendarData',
+        'getLanguageSettings'
     ];
 
     if (in_array($action, $allowedActions) && is_callable($action)) {

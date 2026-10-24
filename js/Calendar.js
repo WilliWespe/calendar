@@ -58,9 +58,13 @@ class Calendar extends SharedUtilities{
 
                 // Create new cell, if cellNumber == 0 (most upper cell), add month name from array
 
-                var isHeader = (cellNumber==0);
-                var cell = new Cell(isHeader);
+                var cell = new Cell();
                 cell.setID(monthIndex+'-'+cellNumber);
+                cell.setMonth(month);
+
+                if(cellNumber == 0){
+                    cell.setAdditionalInformation("month-cell", true);
+                }
 
                 month.addCell(cell);
                 this.addCell(cell);
@@ -86,12 +90,14 @@ class Calendar extends SharedUtilities{
             var day = new Day(rollingDate);
             var cell = this.getCell(day.getID());
         
-            cell.setDay(day);     
+            cell.setDay(day);
+            cell.setAdditionalInformation("day-cell", true);
+
             this.addDay(day);
             this.months.get(rollingDateMonth).addDay(day)
 
             if(rollingDateYear == nextYear){                                                                            // If the loop got into next year
-                cell.setAdditionalInformation("nextYear", true);                                                                             // Add this class to the cell, to indicate that it's next year
+                cell.setAdditionalInformation("next-year", true);                                                                             // Add this class to the cell, to indicate that it's next year
             }
 
             if(rollingDateMonth == 1 && rollingDateDay == 29){                                                          // If there is a 29th Feb in this calendar, decrease dayNumber by one, so the loop iterates 366 times
@@ -173,13 +179,18 @@ class Calendar extends SharedUtilities{
     }
 
     render(){
-        for(let dayObject of this.days.values()){
-            console.log("---------------------------");
-            console.log(dayObject.getID());
-            for(let eventObject of dayObject.events.values()){
-                console.log(eventObject.description);
-            }
-            console.log("---------------------------");
+        for(let monthObject of this.months.values()){
+            
+            monthObject.materialize();
+
+            let monthIndex = monthObject.getID();
+            const cellsOfMonth = new Map(
+                [...this.cells].filter(([key, value]) => key.startsWith(`${monthIndex}-`))
+            );
+
+            for(let cellObject of cellsOfMonth.values()){
+                cellObject.materialize();
+            }      
         }
     }
     

@@ -14,6 +14,10 @@ class Day extends SharedUtilities{
         return this.id;
     }
 
+    getWeekDayIndex(){
+        return this.weekDayIndex;
+    }
+
     getDayNumber(){
         return this.dayIndex;   // already exists: date.getDate()
     }

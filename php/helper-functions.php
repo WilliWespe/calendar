@@ -1,32 +1,34 @@
 <?php
 
 /**
- * Loads and caches the application configuration from the app.config INI file.
+ * Fetches all language setting related in a single query batch.
  * 
- * Uses a static variable to ensure the file system is only accessed once 
- * per request lifecycle, preventing redundant disk reads on subsequent calls.
+ * Automatically decrypts event descriptions before returning.
  *
- * @return array A multidimensional array containing the parsed configuration settings.
- * @throws RuntimeException If the app.config file does not exist at the expected path.
+ * @return array{events: array, dateRanges: array, orderings: array, eventTypes: array} Associative array of calendar data.
+ * @throws PDOException If a database query fails.
+ * @throws Exception If description decryption fails.
  */
-function getConfig(): array {
-    static $config = null;
-    
-    if ($config === null) {
-        $configFile = __DIR__ . '/../app.config';
-        
-        if (!file_exists($configFile)) {
-            throw new RuntimeException("Configuration file missing: {$configFile}");
-        }
-        
-        // The 'true' parameter ensures INI sections are parsed into nested arrays
-        $config = parse_ini_file($configFile, true); 
-    }
-    
-    return $config;
-}
+function getLanguageSettings(): array {
+    $pdo = getPDO();
 
-/* ---------------------------------------------------------------------------------------------------------------------- */
+    // 1. Get the selected user language
+    $userLanguage = $pdo->query(
+        "SELECT *
+         FROM language
+         WHERE selected = 1"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2. Get all dictionary entries
+    $dictionary = $pdo->query(
+        "SELECT * FROM dictionary"
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    return [
+        'userLanguage' => $userLanguage,
+        'dictionary' => $dictionary
+    ];
+}
 
 /**
  * Custom function to parse and load a .env file into environment variables during developement. Can 

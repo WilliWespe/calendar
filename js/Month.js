@@ -6,12 +6,25 @@ class Month{
         this.id = new String();
     }
 
+    materialize(){
+        // Create new month column
+        var monthColumnHTML = `
+            <div class="month-column" id="`+this.getHTMLID()+`"></div>
+        `;
+
+        $("#calendar-container").append(monthColumnHTML);   
+    }
+
     setID(id){
         this.id = id;
     }
     
     getID(){
         return this.id;
+    }
+
+    getHTMLID(){
+        return 'month-'+this.id;
     }
 
     addCell(cell){

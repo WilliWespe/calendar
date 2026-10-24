@@ -3,7 +3,7 @@
 	--geburtstag: orange;
 	--sonstigesEinzel: red;
 	--sonstigesMehrfach: blue;
-	--neuesJahr: black;
+	--next-year: black;
 	--monat: #cccccc;
 
 	--splitNumber: 12;
@@ -12,14 +12,13 @@
 /* globale Styles */
 html, body{
 	font-family: 'Gothic A1';
-	margin-bottom:20px;
 	height:100vh;
 	overflow:hidden;
 }
 
 	#calendar-container{
 		width:100%;
-		height:98vh;
+		height:calc(100vh - 12px - 12*1px);
 		overflow:auto;
 		border-left:solid 1px;
 	}
@@ -34,14 +33,14 @@ html, body{
 		z-index:2;
 	}
 
-		.smallCell{
+		.cell{
 			width:100%;
 			height:calc(100vh / 22);
 			min-height:43px;
 			border-bottom:solid 1px;
 		}
 
-			.monthCell{
+			.month-cell{
 				position:sticky;
 				top:0;
 				line-height:max(calc(100vh / 22), 43px);
@@ -53,12 +52,12 @@ html, body{
 				z-index:1;
 			}
 			
-			.dayCell{
+			.day-cell{
 				position: relative;
 				font-size:15px;
 			}
 
-				.dayCell div{
+				.day-cell div{
 					position: relative;
 					width:45%;
 					top: 50%;
@@ -68,7 +67,7 @@ html, body{
 					transform: translateY(-50%);
 				}
 
-				.dayCell div:nth-child(2){
+				.day-cell div:nth-child(2){
 					height:100%;
 					width:25%;
 					line-height:150%;
@@ -76,8 +75,8 @@ html, body{
 					text-align:center;
 				}
 
-				.neuesJahr div:nth-child(2){
-					border-left:solid var(--neuesJahr) 2px;
+				.next-year div:nth-child(2){
+					border-left:solid var(--next-year) 2px;
 				}
 
 			.noBottomBorder{
@@ -235,25 +234,25 @@ html, body{
 			width:100vw;
 		}
 
-			.smallCell{
+			.cell{
 				height:calc(100vh / 11);
 			}
 
-				.monthCell{
+				.month-cell{
 					line-height:max(calc(100vh / 11), 43px);
 					font-size:50px;
 				}
 				
-				.dayCell{
+				.day-cell{
 					font-size:45px;
 				}
-					.dayCell div:nth-child(2){
+					.day-cell div:nth-child(2){
 						line-height:200%;
 						font-size:100px;
 					}
 
-					.neuesJahr div:nth-child(2){
-						border-left:solid var(--neuesJahr) 5px;
+					.next-year div:nth-child(2){
+						border-left:solid var(--next-year) 5px;
 					}
 
 					.sonstigesLine{

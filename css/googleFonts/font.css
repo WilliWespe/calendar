@@ -1,0 +1,17 @@
+/*
+    https://google-webfonts-helper.herokuapp.com/fonts
+*/
+
+/* gothic-a1-regular - latin */
+@font-face {
+    font-family: 'Gothic A1';
+    font-style: normal;
+    font-weight: 400;
+    src: url('gothic-a1-v13-latin-regular.eot'); /* IE9 Compat Modes */
+    src: local(''),
+         url('gothic-a1-v13-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('gothic-a1-v13-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+         url('gothic-a1-v13-latin-regular.woff') format('woff'), /* Modern Browsers */
+         url('gothic-a1-v13-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+         url('gothic-a1-v13-latin-regular.svg#GothicA1') format('svg'); /* Legacy iOS */
+}
