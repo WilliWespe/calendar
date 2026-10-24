@@ -47,7 +47,6 @@ require_once __DIR__ . '/php/helper-functions.php';
 
 <body>
     
-    <!--
     <button onclick="addEvent()">Add event</button>
     <button onclick="preProcessCalendarData()">Fetch Data</button>
     <button onclick="addEventType('frei', 'e6a321')">Add event type</button>
@@ -57,7 +56,6 @@ require_once __DIR__ . '/php/helper-functions.php';
     <button onclick="addDateRangeToEvent('951f61d3-af7a-11f1-b3a4-4c796e9137c8', '2026-10-03', '2026-10-13')">Add Date Range to Existing Event</button>
     <button onclick="editEventDateRange('952adbda-af7a-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8', '2026-10-07', '2026-10-07')">Edit Range</button>
     <button onclick="deleteEventDateRange('b278fb20-af7d-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8')">Delete Range</button>
-    -->
 
     <div id="calendar-container"></div>
 

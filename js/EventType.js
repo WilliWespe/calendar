@@ -5,4 +5,8 @@ class EventType{
         this.type = type;
         this.backgroundColor = backgroundColor;
     }
+
+    getBackgroundColor(){
+        return this.backgroundColor;
+    }
 }

@@ -157,7 +157,7 @@ class Calendar extends SharedUtilities{
             for(let date of allDatesOfEvent.values()){
 
                 let dayObject = this.days.get(this.constructDayID(date));
-                if(dayObject != null){
+                if(isNotEmpty(dayObject)){
                     dayObject.addEvent(eventObject.getID(), eventObject);
                 }
             }
@@ -171,7 +171,7 @@ class Calendar extends SharedUtilities{
             for(let [eventID, position] of Object.entries(eventIDsAndPosition)){
 
                 let dayObject = this.getDayByMMDD(MMDD);
-                if(dayObject != null){
+                if(isNotEmpty(dayObject)){
                     dayObject.setEventPosition(eventID, position);
                 }
             }
@@ -179,6 +179,12 @@ class Calendar extends SharedUtilities{
     }
 
     render(){
+
+        let freeEventType = [...this.eventTypes.values()].find(obj => obj.type === "free");
+        if(isNotEmpty(freeEventType) && isNotEmpty(freeEventType.backgroundColor)){
+            fallBackFreeBackgroundColor = freeEventType.backgroundColor;
+        }
+
         for(let monthObject of this.months.values()){
             
             monthObject.materialize();
@@ -215,5 +221,7 @@ class Calendar extends SharedUtilities{
         let month = this.months.get(MM - 1);      // Month IDs are 0-based
         return month ? month.days.get(DD) : undefined;
     }
+
+    
 }
 

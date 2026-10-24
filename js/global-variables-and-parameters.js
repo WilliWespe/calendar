@@ -7,3 +7,6 @@ var nextYear = currentYear+1;
 
 let userLanguage = 'en';
 let dictionary = {};
+
+let fallBackFreeBackgroundColor = 'e4ff00';
+let defaultBackgroundColor = 'ffffff';

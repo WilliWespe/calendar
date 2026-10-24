@@ -1,10 +1,7 @@
 :root {
-	--frei: #e4ff00;
-	--geburtstag: orange;
-	--sonstigesEinzel: red;
-	--sonstigesMehrfach: blue;
+	--multi-day-event-indicator-line: red;
 	--next-year: black;
-	--monat: #cccccc;
+	--month: #cccccc;
 
 	--splitNumber: 12;
 }
@@ -47,7 +44,7 @@ html, body{
 				font-size:20px;
 				text-align:center;
 				font-weight:bold;
-				background:var(--monat);
+				background:var(--month);
 				border-top:solid 1px;
 				z-index:1;
 			}
@@ -255,8 +252,8 @@ html, body{
 						border-left:solid var(--next-year) 5px;
 					}
 
-					.sonstigesLine{
-						border-right:solid var(--sonstigesMehrfach) 10px;
+					.multi-day-event-indicator-line{
+						border-right:solid var(--multi-day-event-indicator-line) 10px;
 					}
 
 			#messageBox{

@@ -480,9 +480,8 @@ function getAllCalendarData(): array {
 
     // 1. Get all events (with type names)
     $events = $pdo->query(
-        "SELECT e.*, et.event_type AS event_type_name
-         FROM events e
-         JOIN event_types et ON e.event_type = et.event_type_id"
+        "SELECT *
+         FROM events"
     )->fetchAll(PDO::FETCH_ASSOC);
 
     // --- DECRYPT ALL DESCRIPTIONS ---

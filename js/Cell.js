@@ -35,6 +35,79 @@ class Cell {
 
         $("#"+this.getHTMLID()).addClass(cssClassesToApply);
 
+        let indicatorColors = this.getIndicatorColors();
+
+        let allBackgroundColors = Array.from(indicatorColors[0]);
+        let allLineColors = Array.from(indicatorColors[1]);
+        let allDotColors = Array.from(indicatorColors[2]);
+
+        if(allBackgroundColors.length == 1){
+            allBackgroundColors.push(defaultBackgroundColor);
+        }
+
+        let indicatorBox = $("#"+this.getHTMLID()+"-event-indicator-box");                                                                        // How many colors are in the gradient
+        
+        if(allBackgroundColors.length > 1){
+            let gradient = "linear-gradient(to top left";                                                               // Initialise gradient
+            for(var backgroundColorIndex = 0; backgroundColorIndex < allBackgroundColors.length; backgroundColorIndex++){
+                gradient += ",#"+allBackgroundColors[backgroundColorIndex];
+            }
+            gradient += ")";
+            $("#"+this.getHTMLID()).css("background", gradient);
+        }   
+    
+        if(allLineColors.length > 0){                         
+            indicatorBox.css("border-right", "solid "+averageHexColors(allLineColors)+" 5px");                      
+        }
+        if(allDotColors.length > 0){      
+            let averageDotColor = averageHexColors(allDotColors);                                                            
+            indicatorBox.html("&#9679;");
+            indicatorBox.css("color", averageDotColor)
+        }
+    }
+
+    getIndicatorColors(){
+
+        let allBackgroundColors = new Set();
+        let allLineColors = new Set();
+        let allDotColors = new Set();
+
+        if(isNotEmpty(this.day)){
+
+            if(this.day.isWeekEnd()){
+                allBackgroundColors.add(fallBackFreeBackgroundColor);
+            }
+
+            let eventObjects = this.day.getEvents();
+
+            if(isNotEmpty(eventObjects)){
+                for(let eventItem of eventObjects.values()){
+
+                    let eventTypeObject = eventItem.getType();
+                    let backgroundColor = eventTypeObject.getBackgroundColor();
+
+                    let dotColor = eventItem.getDotColor();
+
+                    if(isNotEmpty(backgroundColor)){
+                        allBackgroundColors.add(backgroundColor);
+                    }
+                    else if(isNotEmpty(dotColor)){
+                        let isCurrentEventMultiDay = eventItem.getMultiDateRangesForDay(this.day).length > 0;
+
+                        console.log(isCurrentEventMultiDay);
+
+                        if(isCurrentEventMultiDay){
+                            allLineColors.add(dotColor);
+                        }
+                        else{
+                            allDotColors.add(dotColor);
+                        }
+                    }
+                }
+            }
+        }
+
+        return [allBackgroundColors, allLineColors, allDotColors];
     }
 
     getHTMLContent(){
@@ -42,7 +115,7 @@ class Cell {
             let monthName = arrMonths[this.month.getID()];
             return firstCharUpperCase(translate(monthName));
         }
-        else if(this.day != null){
+        else if(isNotEmpty(this.day)){
 
             let weekDayIndex = this.day.getWeekDayIndex();
             let weekDayString = arrWeekDays[weekDayIndex];

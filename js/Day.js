@@ -22,6 +22,18 @@ class Day extends SharedUtilities{
         return this.dayIndex;   // already exists: date.getDate()
     }
 
+    getMonthIndex(){
+        return this.monthIndex;
+    }
+
+    getEvents(){
+        return this.events;
+    }
+
+    isWeekEnd(){
+        return (this.weekDayIndex == 0 || this.weekDayIndex == 6);
+    }
+
     addEvent(id, eventObject){
         this.events.set(id, eventObject);
     }
