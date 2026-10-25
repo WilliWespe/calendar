@@ -76,21 +76,27 @@ html, body{
 					border-left:solid var(--next-year) 2px;
 				}
 
-			.noBottomBorder{
+				div[id^="cell-"][id$="-event-indicator-box"], div[id^="cell-"][id$="-date"]{
+					pointer-events: none;
+				}
+
+			.bottom-cell{
 				border-bottom:none;
 			}
 
-	#messageBox{
+	#window{
 		position:fixed;
 		width:70vw;
 		height:50vh;
+		left:calc(50vw - 70vw / 2);
+		top:calc(50vh - 50vh / 2);
 		border:solid black;
 		background:white;
 		font-size:25px;
 		z-index:10;
 	}
 
-		#messageHeader{
+		#window-header{
 			position:relative;
 			background:white;
 			border-bottom:solid;
@@ -98,12 +104,12 @@ html, body{
 			z-index:9;
 		}
 
-			#date{
+			#window-title{
 				padding-left:2.5%;
 				float:left;
 			}
 
-			#messageClose{
+			#window-close{
 				width:5%;
 				margin-top:-2.5px;
 				float:right;
@@ -112,7 +118,7 @@ html, body{
 				cursor:pointer;
 			}
 		
-		#messageContentBox{
+		#window-content-box{
 			position:absolute;
 			width:100%;
 			height:calc(100% - 30px);
@@ -125,65 +131,65 @@ html, body{
 		}
 
 			/* width */
-			#messageContentBox::-webkit-scrollbar {
+			#window-content-box::-webkit-scrollbar {
 				width: 5px;
 			}
 		
-			#messageContentBox::-webkit-scrollbar-button{
+			#window-content-box::-webkit-scrollbar-button{
 				height:0;
 			}
 		
 			/* Track */
-			#messageContentBox::-webkit-scrollbar-track {
+			#window-content-box::-webkit-scrollbar-track {
 				background: transparent; 
 			}
 		
 			/* Handle */
-			#messageContentBox::-webkit-scrollbar-thumb {
+			#window-content-box::-webkit-scrollbar-thumb {
 				background: black; 
 			}
 
-				.textareaContainer, .buttonContainer{
+				.textarea-container, .button-container{
 					margin-left:5%;
 				}
 
-				#messageContentBox img{
+				#window-content-box img{
 					height:45px;
 					border-radius:10%;
 					cursor:pointer;
 				}
 
-					.save{
+					.window-save-btn{
 						background:#5cff6b;
 					}
 
-					.delete{
+					.window-delete-btn{
 						background:#ff4545;
 					}
 
-					.add{
+					.window-add-btn{
 						background:#65c8ff;
 					}
 
-					.notify{
+					.window-include-in-mail-checkbox{
 						background:#e4ff00;
 					}
 
-					#messageContentBox input{
+					#window-content-box input{
 						position:relative;
 						width:46px;
 						height:46px;
 					}
 
-					#messageContentBox input[type=color]{
+					#window-content-box input[type=color]{
 						top:-5px;
 					}
 
-			#messageContentBox textarea{
+			#window-content-box textarea{
 				height:40px;
 			}
 
-			#messageContent{
+			#window-content{
 				position: relative;
 			}
 
@@ -256,26 +262,28 @@ html, body{
 						border-right:solid var(--multi-day-event-indicator-line) 10px;
 					}
 
-			#messageBox{
+			#window{
 				width:90vw;
 				height:50vh;
+				left:calc(50vw - 90vw / 2);
+				top:calc(50vh - 50vh / 2);
 				font-size:55px;
 			}
 
-				#messageHeader{
+				#window-header{
 					height:60px;
 				}
 
-					#date{
+					#window-title{
 						padding-left:2.5%;
 					}
 
-					#messageClose{
+					#window-close{
 						width:10%;
 						margin-top:-5px;
 					}
 				
-				#messageContentBox{
+				#window-content-box{
 					width:100%;
 					height:calc(100% - 60px);
 					top:60px;
@@ -284,27 +292,27 @@ html, body{
 				}
 
 					/* width */
-					#messageContentBox::-webkit-scrollbar {
+					#window-content-box::-webkit-scrollbar {
 						width: 5px;
 					}
 
-					#messageContentBox img{
+					#window-content-box img{
 						height:70px;
 					}
 
-					#messageContentBox input{
+					#window-content-box input{
 						width:70px;
 						height:70px;
 						top:-5px;
 					}
 
-					#messageContentBox textarea{
+					#window-content-box textarea{
 						height:70px;
 						font-size:40px;
 						border:solid 1px;
 					}
 }
 
-#messageContentBox input[type=checkbox]{
+#window-content-box input[type=checkbox]{
 	accent-color: blue;
 }

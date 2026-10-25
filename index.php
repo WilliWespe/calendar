@@ -23,6 +23,7 @@ require_once __DIR__ . '/php/helper-functions.php';
 
     <script src="js/jquery.js"></script>
     <script src="js/SharedUtilities.js"></script>
+    <script src="js/Window.js"></script>
     <script src="js/Calendar.js"></script>
     <script src="js/EventType.js"></script>
     <script src="js/DateRange.js"></script>
@@ -57,7 +58,7 @@ require_once __DIR__ . '/php/helper-functions.php';
     <button onclick="editEventDateRange('952adbda-af7a-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8', '2026-10-07', '2026-10-07')">Edit Range</button>
     <button onclick="deleteEventDateRange('b278fb20-af7d-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8')">Delete Range</button>
 
-    <div id="calendar-container"></div>
+    
 
     <?php
         // Display custom footer elements 

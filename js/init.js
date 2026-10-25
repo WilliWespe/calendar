@@ -8,5 +8,15 @@ async function initializeApp() {
     window.document.title = firstCharUpperCase(translate("Calendar"));
 
     new Calendar(); 
+
+    /*if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+		today = new Date();
+		todayDate = arrMonths[today.getMonth()] + "_" + today.getDate();
+		todayElement = document.getElementById(todayDate);
+		todayElement.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+	}*/
+
+
+		
 }
         

@@ -46,7 +46,7 @@ class Cell {
             allBackgroundColors.push(defaultBackgroundColor);
         }
 
-        let indicatorBox = $("#"+this.getHTMLID()+"-event-indicator-box");                                                                        // How many colors are in the gradient
+        let indicatorBox = $("#"+this.getHTMLID()+"-event-indicator-box");                                                              
         
         if(allBackgroundColors.length > 1){
             let gradient = "linear-gradient(to top left";                                                               // Initialise gradient
@@ -149,6 +149,10 @@ class Cell {
 
     getCellType(key){
         return this.cellType.get(key);
+    }
+
+    getDay(){
+        return this.day;
     }
 
     setDay(day){

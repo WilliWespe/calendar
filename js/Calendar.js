@@ -2,11 +2,16 @@ class Calendar extends SharedUtilities{
 
     constructor(){
         super();
+
+        this.id = "calendar-container";
+
         this.eventTypes = new Map();
         this.events = new Map();
         this.months = new Map();
         this.days = new Map();
         this.cells = new Map();
+
+        this.window = new Window();
 
         this.raw_db_data = [];
 
@@ -71,6 +76,9 @@ class Calendar extends SharedUtilities{
 
                 if(cellNumber == 0){
                     cell.setCellType("month-cell", true);
+                }
+                if(cellNumber == 31){
+                    cell.setCellType("bottom-cell", true);
                 }
 
                 month.addCell(cell);
@@ -187,6 +195,8 @@ class Calendar extends SharedUtilities{
 
     render(){
 
+        $("body").append(`<div id="`+this.id+`"></div>`);
+
         let freeEventType = [...this.eventTypes.values()].find(obj => obj.type === "free");
         if(isNotEmpty(freeEventType) && isNotEmpty(freeEventType.backgroundColor)){
             fallBackFreeBackgroundColor = freeEventType.backgroundColor;
@@ -205,6 +215,30 @@ class Calendar extends SharedUtilities{
                 cellObject.materialize();
             }      
         }
+
+        this.scrollToToday();
+
+        document.getElementById(this.id).addEventListener('click', (event) => {
+            this.handleClickEvents(event);
+        });
+    }
+
+    scrollToToday(){
+        let todayDate = new Date();
+        let todayCellID = this.cells.get(todayDate.getMonth() + "-" + todayDate.getDate()).getHTMLID();
+
+		let todayCellDOMElement = document.getElementById(todayCellID);
+        let windowWidth = $(window).width();
+
+        let scrollMode = windowWidth <= 1300 ? "center" : "nearest";
+
+		todayCellDOMElement.scrollIntoView({ behavior: "instant", block: scrollMode, inline: "nearest" });
+    }
+
+    handleClickEvents(event) {
+        if (event.target.classList.contains('day-cell')) {
+            this.window.render(this.getCell(event.target.id));
+        }
     }
     
     addCell(cell){
@@ -220,7 +254,7 @@ class Calendar extends SharedUtilities{
     }
 
     getCell(cellID){
-        return this.cells.get(cellID);
+        return this.cells.get(cellID.replace("cell-", ""));
     }
 
     getDayByMMDD(MMDD){
