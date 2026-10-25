@@ -40,7 +40,7 @@ require_once __DIR__ . '/php/helper-functions.php';
 <script>
 
 	$(document).ready(function(){
-        let calendar = initializeApp();
+        initializeApp();
 	});
 
 </script>

@@ -5,6 +5,6 @@ async function initializeApp() {
     userLanguage = languageSettings.userLanguage[0].user_language;
     dictionary = buildDictionary(languageSettings.dictionary);
 
-    return new Calendar(); 
+    new Calendar(); 
 }
         

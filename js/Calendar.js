@@ -46,6 +46,13 @@ class Calendar extends SharedUtilities{
         this.db_data_orderings_by_mm_dd = this.db_data[5];
     }
 
+    async refreshOrderingToEventsPerDay(){
+        this.db_data = await preProcessDatabaseData();
+        this.db_data_orderings = this.db_data[2];
+        this.db_data_orderings_by_mm_dd = this.db_data[5];
+        this.applyOrderingToEventsPerDay();
+    }
+
     createCalendarStructure(){
         for(var monthIndex=0; monthIndex<arrMonths.length; monthIndex++){                                                                                        // Loop through all months (0-11)
 

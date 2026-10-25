@@ -14,6 +14,29 @@ $.ajaxSetup({
     }
 });
 
+/**
+ * Sends an AJAX POST to routing.php. Reloads the page on success.
+ * Set reload: false if you make several calls in a row and want to
+ * reload once at the end yourself.
+ */
+async function apiRequest(payload, reload = true) {
+    let success = true;
+    try {
+        await $.ajax({
+            url: 'php/routing.php',
+            type: 'POST',
+            data: payload
+        });
+    } catch (xhr) {
+        console.error("Server returned an error:", xhr.status, xhr.responseText);
+        success = false;
+    }
+
+    if (reload && success) {
+        location.reload();
+    }
+}
+
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 /**
@@ -33,6 +56,7 @@ async function addEvent() {
             eventData: {
                 event_description: "Das ist ein Test",
                 event_type: event_type_stuff,
+                event_dot_color: "0de",
                 include_event_in_mail: 1
             },
             eventDateRanges: [
@@ -43,32 +67,13 @@ async function addEvent() {
 
     for (let i = 0; i < mockupDataAddEventList.length; i++) {
         let currentItem = mockupDataAddEventList[i];
-
-        // 1. Create a clean JS object. 
-        // jQuery will automatically convert this to bracket notation for $_POST.
-        let payload = {
+        await apiRequest({
             action: "addEvent",
             eventData: currentItem.eventData,
             eventDateRanges: currentItem.eventDateRanges
-        };
-
-        try {
-            // 2. Await the jQuery AJAX call
-            await $.ajax({
-                url: 'php/routing.php',
-                type: 'POST',
-                data: payload 
-            });
-
-            // 3. Success
-            //location.reload();
-            console.log("success")
-
-        } catch (xhr) {
-            // 4. Handle errors (status codes outside 200-299)
-            console.error("Server returned an error:", xhr.status, xhr.responseText);
-        }
-    } 
+        }, reload=false);
+    }
+    location.reload();
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -80,30 +85,10 @@ async function addEvent() {
  * @returns {Promise<void>}
  */
 async function deleteEvent(eventId) {
-    
-    // 1. Create a clean JS object. 
-    // jQuery will automatically convert this to bracket notation for $_POST.
-    let payload = {
+    await apiRequest({
         action: "deleteEvent",
         eventId: eventId
-    };
-
-    try {
-        // 2. Await the jQuery AJAX call
-        await $.ajax({
-            url: 'php/routing.php',
-            type: 'POST',
-            data: payload 
-        });
-
-        // 3. Success
-        //location.reload();
-        console.log("success")
-
-    } catch (xhr) {
-        // 4. Handle errors (status codes outside 200-299)
-        console.error("Server returned an error:", xhr.status, xhr.responseText);
-    }
+    });
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -119,8 +104,8 @@ async function deleteEvent(eventId) {
  * @returns {Promise<void>}
  */
 async function editEvent(eventId, eventDescription, eventType, eventDotColor = null, includeEventInMail = 1) {
-    
-    let payload = {
+
+    await apiRequest({
         action: "editEvent",
         eventId: eventId,
         eventData: {
@@ -129,21 +114,7 @@ async function editEvent(eventId, eventDescription, eventType, eventDotColor = n
             event_dot_color: eventDotColor,
             include_event_in_mail: includeEventInMail ? 1 : 0
         }
-    };
-
-    try {
-        await $.ajax({
-            url: 'php/routing.php',
-            type: 'POST',
-            data: payload 
-        });
-
-        console.log("Event successfully updated");
-        // location.reload(); or call storeCalendarDataInRAM() to refresh UI
-
-    } catch (xhr) {
-        console.error("Server returned an error:", xhr.status, xhr.responseText);
-    }
+    });
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -157,23 +128,12 @@ async function editEvent(eventId, eventDescription, eventType, eventDotColor = n
  * @returns {Promise<void>}
  */
 async function addDateRangeToEvent(eventId, startDate, endDate = null) {
-    let payload = {
+    await apiRequest({
         action: "addDateToEvent", // Maps to the existing PHP function name
         eventId: eventId,
         startDate: startDate,
         endDate: endDate
-    };
-
-    try {
-        await $.ajax({ 
-            url: 'php/routing.php', 
-            type: 'POST', 
-            data: payload 
-        });
-        console.log("Date range successfully added and reconciled.");
-    } catch (xhr) {
-        console.error("Failed to add date range:", xhr.status, xhr.responseText);
-    }
+    });
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -188,24 +148,13 @@ async function addDateRangeToEvent(eventId, startDate, endDate = null) {
  * @returns {Promise<void>}
  */
 async function editEventDateRange(rangeId, eventId, startDate, endDate) {
-    let payload = {
+    await apiRequest({
         action: "editEventDateRange",
         rangeId: rangeId,
         eventId: eventId,
         startDate: startDate,
         endDate: endDate
-    };
-
-    try {
-        await $.ajax({ 
-            url: 'php/routing.php', 
-            type: 'POST', 
-            data: payload 
-        });
-        console.log("Date range successfully edited and reconciled.");
-    } catch (xhr) {
-        console.error("Failed to edit date range:", xhr.status, xhr.responseText);
-    }
+    });
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -218,22 +167,11 @@ async function editEventDateRange(rangeId, eventId, startDate, endDate) {
  * @returns {Promise<void>}
  */
 async function deleteEventDateRange(rangeId, eventId) {
-    let payload = {
+    await apiRequest({
         action: "deleteEventDateRange",
         rangeId: rangeId,
         eventId: eventId
-    };
-
-    try {
-        await $.ajax({ 
-            url: 'php/routing.php', 
-            type: 'POST', 
-            data: payload 
-        });
-        console.log("Date range successfully deleted and orderings cleaned.");
-    } catch (xhr) {
-        console.error("Failed to delete date range:", xhr.status, xhr.responseText);
-    }
+    });
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -246,31 +184,12 @@ async function deleteEventDateRange(rangeId, eventId) {
  * @returns {Promise<void>}
  */
 async function addEventType(eventType, eventBackgroundColor = null) {
-    
-    // 1. Create a clean JS object. 
-    // jQuery will automatically convert this to bracket notation for $_POST.
-    let payload = {
+    await apiRequest({
         action: "addEventType",
         eventType: eventType,
         eventBackgroundColor: eventBackgroundColor
-    };
-
-    try {
-        // 2. Await the jQuery AJAX call
-        await $.ajax({
-            url: 'php/routing.php',
-            type: 'POST',
-            data: payload 
-        });
-
-        // 3. Success
-        //location.reload();
-        console.log("success")
-
-    } catch (xhr) {
-        // 4. Handle errors (status codes outside 200-299)
-        console.error("Server returned an error:", xhr.status, xhr.responseText);
-    }
+    });
+    
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
@@ -285,28 +204,13 @@ async function addEventType(eventType, eventBackgroundColor = null) {
  * @returns {Promise<void>}
  */
 async function changeEventPosition(eventId, month, day, change) {
-    let payload = {
+    await apiRequest({
         action: "changeEventPosition",
         eventId: eventId,
         month: month,
         day: day,
         change: change
-    };
-
-    try {
-        await $.ajax({
-            url: 'php/routing.php',
-            type: 'POST',
-            data: payload 
-        });
-
-        console.log("Position successfully updated");
-        // You should re-render or re-fetch your calendar data here
-        // await storeCalendarDataInRAM(); 
-
-    } catch (xhr) {
-        console.error("Failed to change position:", xhr.status, xhr.responseText);
-    }
+    }, reload = false);
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
