@@ -205,6 +205,24 @@ function addDateToEvent(array $postData): void {
             throw new Exception("Start date must be <= end date");
         }
 
+        $stmt = $pdo->prepare(
+            "SELECT EXISTS(
+                SELECT 1 FROM event_date_ranges
+                WHERE event_id = :event_id AND start_date = :start_date AND end_date = :end_date
+            )"
+        );
+        $stmt->execute([
+            ':event_id'   => $eventId,
+            ':start_date' => $newStart->format('Y-m-d'),
+            ':end_date'   => $newEnd->format('Y-m-d')
+        ]);
+
+        if ((bool) $stmt->fetchColumn()) {
+            throw new Exception(
+                "Date Range from '{$newStart->format('Y-m-d')}' to '{$newEnd->format('Y-m-d')}' ". "already exists for event id '$eventId'"
+            );
+        }
+
         // 1. Insert the raw unmerged range
         $rangeId = $pdo->query("SELECT UUID()")->fetchColumn();
         $stmtInsert = $pdo->prepare(

@@ -53,7 +53,7 @@ require_once __DIR__ . '/php/helper-functions.php';
     <button onclick="deleteEvent('216a40d5-af7a-11f1-b3a4-4c796e9137c8')">Delete event</button>
     <button onclick="editEvent('2175253f-af7a-11f1-b3a4-4c796e9137c8', 'Test', '37940a20-ad44-11f1-834f-4c796e9137c8', eventDotColor = 'ffffff', includeEventInMail = 0)">Edit Event</button>
     <button onclick="changeEventPosition('9528971e-af7a-11f1-b3a4-4c796e9137c8', 10, 12, -1)">Change order</button>
-    <button onclick="addDateRangeToEvent('951f61d3-af7a-11f1-b3a4-4c796e9137c8', '2026-10-03', '2026-10-13')">Add Date Range to Existing Event</button>
+    <button onclick="addDateRangeToEvent('c0433454-cfe5-11f1-a3bd-4c796e9137c8', '2028-04-07', '2028-04-07')">Add Date Range to Existing Event</button>
     <button onclick="editEventDateRange('952adbda-af7a-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8', '2026-10-07', '2026-10-07')">Edit Range</button>
     <button onclick="deleteEventDateRange('b278fb20-af7d-11f1-b3a4-4c796e9137c8', '9528971e-af7a-11f1-b3a4-4c796e9137c8')">Delete Range</button>
 
