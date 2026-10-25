@@ -5,6 +5,8 @@ async function initializeApp() {
     userLanguage = languageSettings.userLanguage[0].user_language;
     dictionary = buildDictionary(languageSettings.dictionary);
 
+    window.document.title = firstCharUpperCase(translate("Calendar"));
+
     new Calendar(); 
 }
         

@@ -51,6 +51,7 @@ function isNotEmpty(obj) {
 }
 
 function averageHexColors(colors) {
+    console.log(colors);
     if (!colors || colors.length === 0) return "#000000";
 
     let totalR = 0, totalG = 0, totalB = 0;

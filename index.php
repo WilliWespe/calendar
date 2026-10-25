@@ -14,7 +14,7 @@ require_once __DIR__ . '/php/helper-functions.php';
     <meta name="author" content="">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(getCsrfToken()); ?>">
     
-    <title></title>	
+    <title>Calendar</title>	
 
     <link id="icon" rel="shortcut icon" type="image/x-icon" href="../favicon.ico"/>
 	

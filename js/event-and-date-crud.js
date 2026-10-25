@@ -55,12 +55,12 @@ async function addEvent() {
         {
             eventData: {
                 event_description: "Das ist ein Test",
-                event_type: event_type_stuff,
-                event_dot_color: "0de",
+                event_type: event_type_birthday,
+                event_dot_color: "00ff00",
                 include_event_in_mail: 1
             },
             eventDateRanges: [
-                { start: '2028-01-01', end: '2028-01-01' }
+                { start: '2028-01-10', end: '2028-01-10' }
             ]
         }
     ];

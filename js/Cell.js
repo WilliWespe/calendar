@@ -38,9 +38,9 @@ class Cell {
 
         let indicatorColors = this.getIndicatorColors();
 
-        let allBackgroundColors = Array.from(indicatorColors[0]);
-        let allLineColors = Array.from(indicatorColors[1]);
-        let allDotColors = Array.from(indicatorColors[2]);
+        let allBackgroundColors = indicatorColors[0];
+        let allLineColors = indicatorColors[1];
+        let allDotColors = indicatorColors[2];
 
         if(allBackgroundColors.length == 1){
             allBackgroundColors.push(defaultBackgroundColor);
@@ -69,14 +69,14 @@ class Cell {
 
     getIndicatorColors(){
 
-        let allBackgroundColors = new Set();
-        let allLineColors = new Set();
-        let allDotColors = new Set();
+        let allBackgroundColors = [];
+        let allLineColors = [];
+        let allDotColors = [];
 
         if(isNotEmpty(this.day)){
 
             if(this.day.isWeekEnd()){
-                allBackgroundColors.add(fallBackFreeBackgroundColor);
+                allBackgroundColors.push(fallBackFreeBackgroundColor);
             }
 
             let eventObjects = this.day.getEvents();
@@ -90,16 +90,16 @@ class Cell {
                     let dotColor = eventItem.getDotColor();
 
                     if(isNotEmpty(backgroundColor)){
-                        allBackgroundColors.add(backgroundColor);
+                        allBackgroundColors.push(backgroundColor);
                     }
                     else if(isNotEmpty(dotColor)){
                         let isCurrentEventMultiDay = eventItem.getMultiDateRangesForDay(this.day).length > 0;
 
                         if(isCurrentEventMultiDay){
-                            allLineColors.add(dotColor);
+                            allLineColors.push(dotColor);
                         }
                         else{
-                            allDotColors.add(dotColor);
+                            allDotColors.push(dotColor);
                         }
                     }
                 }
@@ -117,7 +117,7 @@ class Cell {
         else if(isNotEmpty(this.day)){
 
             let weekDayIndex = this.day.getWeekDayIndex();
-            let weekDayString = arrWeekDays[weekDayIndex];
+            let weekDayString = translate(arrWeekDays[weekDayIndex]);
 
             let dayNumber = this.day.getDayNumber();
 
