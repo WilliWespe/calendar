@@ -63,7 +63,7 @@ class Calendar extends SharedUtilities{
                 cell.setMonth(month);
 
                 if(cellNumber == 0){
-                    cell.setAdditionalInformation("month-cell", true);
+                    cell.setCellType("month-cell", true);
                 }
 
                 month.addCell(cell);
@@ -91,13 +91,13 @@ class Calendar extends SharedUtilities{
             var cell = this.getCell(day.getID());
         
             cell.setDay(day);
-            cell.setAdditionalInformation("day-cell", true);
+            cell.setCellType("day-cell", true);
 
             this.addDay(day);
             this.months.get(rollingDateMonth).addDay(day)
 
             if(rollingDateYear == nextYear){                                                                            // If the loop got into next year
-                cell.setAdditionalInformation("next-year", true);                                                                             // Add this class to the cell, to indicate that it's next year
+                cell.setCellType("next-year", true);                                                                             // Add this class to the cell, to indicate that it's next year
             }
 
             if(rollingDateMonth == 1 && rollingDateDay == 29){                                                          // If there is a 29th Feb in this calendar, decrease dayNumber by one, so the loop iterates 366 times

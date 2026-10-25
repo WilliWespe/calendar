@@ -33,13 +33,10 @@ async function addEvent() {
             eventData: {
                 event_description: "Das ist ein Test",
                 event_type: event_type_stuff,
-                event_dot_color: "0de",
                 include_event_in_mail: 1
             },
             eventDateRanges: [
-                { start: '2028-03-07', end: '2028-03-07' },
-                { start: '2028-02-07', end: '2028-02-09' },
-                { start: '2028-01-07', end: '2028-02-07' }
+                { start: '2028-01-01', end: '2028-01-01' }
             ]
         }
     ];

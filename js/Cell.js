@@ -5,7 +5,7 @@ class Cell {
         this.day = null;
         this.month = new Month();
         this.id = new String();
-        this.additionalInformation = new Map();
+        this.cellType = new Map();
     }
 
     materialize(){
@@ -24,10 +24,11 @@ class Cell {
     applyStyling(){
 
         $("#"+this.getHTMLID()).removeClass();
+        $("#"+this.getHTMLID()).removeAttr('style');
 
         let cssClassesToApply = ['cell'];
 
-        for(let [infoKey, infoValue] of this.additionalInformation){
+        for(let [infoKey, infoValue] of this.cellType){
             if(infoValue){
                 cssClassesToApply.push(infoKey);
             }
@@ -94,8 +95,6 @@ class Cell {
                     else if(isNotEmpty(dotColor)){
                         let isCurrentEventMultiDay = eventItem.getMultiDateRangesForDay(this.day).length > 0;
 
-                        console.log(isCurrentEventMultiDay);
-
                         if(isCurrentEventMultiDay){
                             allLineColors.add(dotColor);
                         }
@@ -111,7 +110,7 @@ class Cell {
     }
 
     getHTMLContent(){
-        if(this.getAdditionalInformation("month-cell")){
+        if(this.getCellType("month-cell")){
             let monthName = arrMonths[this.month.getID()];
             return firstCharUpperCase(translate(monthName));
         }
@@ -144,12 +143,12 @@ class Cell {
         return 'cell-'+this.id;
     }
 
-    setAdditionalInformation(key, value){
-        this.additionalInformation.set(key, value);
+    setCellType(key, value){
+        this.cellType.set(key, value);
     }
 
-    getAdditionalInformation(key){
-        return this.additionalInformation.get(key);
+    getCellType(key){
+        return this.cellType.get(key);
     }
 
     setDay(day){
